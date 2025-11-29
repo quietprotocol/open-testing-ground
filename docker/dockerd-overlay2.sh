@@ -46,26 +46,13 @@ if ! mount | grep -q " on ${MNT_DIR} type ext4"; then
 	mount --bind "${TMP_MNT}" "${MNT_DIR}"
 fi
 
-# Configure Docker daemon.json to use overlay2
-# OpenWrt uses /tmp/dockerd/daemon.json instead of /etc/docker/daemon.json
-DOCKER_CONF_DIR="/tmp/dockerd"
-DOCKER_CONF="${DOCKER_CONF_DIR}/daemon.json"
-mkdir -p "${DOCKER_CONF_DIR}"
-
-# Check if daemon.json exists and if it already has overlay2 configured
-if [ ! -f "${DOCKER_CONF}" ] || ! grep -q "overlay2" "${DOCKER_CONF}" 2>/dev/null; then
-	# Create or update daemon.json with overlay2 configuration
-	cat > "${DOCKER_CONF}" << 'EOF'
-{
-  "storage-driver": "overlay2",
-  "data-root": "/opt/docker/",
-  "storage-opts": [
-    "overlay2.override_kernel_check=true"
-  ],
-  "log-level": "debug",
-  "iptables": true,
-  "ip6tables": false
-}
-EOF
-fi
+# Configure Docker daemon via UCI (init script generates /tmp/dockerd/daemon.json from UCI)
+# All options are simple values, so UCI can handle them without needing a custom JSON file
+uci set dockerd.globals.storage_driver="overlay2"
+uci set dockerd.globals.data_root="/opt/docker/"
+uci set dockerd.globals.log_level="debug"
+uci set dockerd.globals.iptables="0"
+uci set dockerd.globals.ip6tables="0"
+uci delete dockerd.globals.alt_config_file 2>/dev/null || true
+uci commit dockerd
 

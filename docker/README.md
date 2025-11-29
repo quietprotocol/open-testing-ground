@@ -27,8 +27,11 @@ We ended up with Docker using **overlay2** backed by an **ext4 loopback file** b
 **Key facts:**
 - **Docker data-root**: `/opt/docker/`
 - **Loopback image**: `/overlay/docker.ext4` (20 GB ext4 filesystem)
-- **Config file**: `/etc/docker/daemon.json`
+- **UCI config**: `/etc/config/dockerd` (Docker daemon configuration)
+- **Generated config**: `/tmp/dockerd/daemon.json` (auto-generated from UCI by init script)
 - **Result**: `docker info` shows `Storage Driver: overlay2`
+
+**Configuration approach:** We use OpenWrt's UCI system (`/etc/config/dockerd`) to configure Docker. The dockerd init script automatically generates `/tmp/dockerd/daemon.json` from the UCI config. Since we only use simple options (no arrays or complex structures), UCI handles everything we need.
 
 **One-shot commands we ran (DESTRUCTIVE – nukes all Docker data):**
 
@@ -47,16 +50,13 @@ mkfs.ext4 -F "$IMG_PATH"
 mkdir -p "$MNT_DIR"
 mount -o loop "$IMG_PATH" "$MNT_DIR"
 
-# 3) Configure Docker to use overlay2 + /opt/docker
-cat > /etc/docker/daemon.json << 'EOF'
-{
-  "storage-driver": "overlay2",
-  "data-root": "/opt/docker/",
-  "storage-opts": [
-    "overlay2.override_kernel_check=true"
-  ]
-}
-EOF
+# 3) Configure Docker via UCI to use overlay2 + /opt/docker
+uci set dockerd.globals.storage_driver="overlay2"
+uci set dockerd.globals.data_root="/opt/docker/"
+uci set dockerd.globals.log_level="debug"
+uci set dockerd.globals.iptables="0"
+uci set dockerd.globals.ip6tables="0"
+uci commit dockerd
 
 # 4) Start Docker and verify
 /etc/init.d/dockerd start
@@ -143,15 +143,14 @@ If the script doesn't work, check:
    modprobe overlay
    ```
 
-3. **Configure Docker daemon:**
-   Create/edit `/etc/docker/daemon.json`:
-   ```json
-   {
-     "storage-driver": "overlay2",
-     "storage-opts": [
-       "overlay2.override_kernel_check=true"
-     ]
-   }
+3. **Configure Docker daemon via UCI:**
+   ```bash
+   uci set dockerd.globals.storage_driver="overlay2"
+   uci set dockerd.globals.data_root="/opt/docker/"
+   uci set dockerd.globals.log_level="debug"
+   uci set dockerd.globals.iptables="0"
+   uci set dockerd.globals.ip6tables="0"
+   uci commit dockerd
    ```
 
 4. **Restart Docker** (see above)
