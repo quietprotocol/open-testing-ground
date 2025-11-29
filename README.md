@@ -191,6 +191,25 @@ If you encounter issues:
 3. **GPS issues**: See [`gps/README.md`](gps/README.md) troubleshooting section
 4. **TAK Server issues**: See [`atak/README.md`](atak/README.md) troubleshooting section
 
+## TODOs
+
+### GPS
+
+- Get GPS working
+  - Why doesn't mine work on ttyS0?
+  - [WM1302 Pi Hat GPS Discussion](https://forum.chirpstack.io/t/wm1302-pi-hat-built-in-gps/24124)
+
+### ATAK
+
+- GPS to COT forwarded
+  - With and without server
+  - [ATAK Push COTS](https://github.com/kylesayrs/ATAK_push_cots)
+  - [PyTAK](https://github.com/snstac/pytak)
+
+### UPS
+
+- Get battery status working. Missing i2c stuff on openmanet?
+
 ## References
 
 - [OpenMANET OpenWrt Repository](https://github.com/OpenMANET/openwrt)
