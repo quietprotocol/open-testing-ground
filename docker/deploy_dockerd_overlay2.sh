@@ -86,26 +86,38 @@ echo ""
 echo "Step 4: Verifying rc.local configuration..."
 sshpass -p "$DEVICE_PASS" ssh -o StrictHostKeyChecking=no "${DEVICE_USER}@${DEVICE_IP}" "cat /etc/rc.local"
 
-# Ask if user wants to test it now
+# Apply the script immediately (without reboot)
+echo ""
+echo "Step 5: Applying Docker overlay2 configuration..."
+sshpass -p "$DEVICE_PASS" ssh -o StrictHostKeyChecking=no "${DEVICE_USER}@${DEVICE_IP}" << 'REMOTE_EOF'
+# Stop Docker if running
+/etc/init.d/dockerd stop 2>/dev/null || true
+sleep 2
+
+# Run the mount and config script
+/usr/bin/dockerd-overlay2.sh
+
+# Start Docker
+/etc/init.d/dockerd start
+sleep 5
+REMOTE_EOF
+
+# Verify the setup
+echo ""
+echo "Step 6: Verifying configuration..."
+sshpass -p "$DEVICE_PASS" ssh -o StrictHostKeyChecking=no "${DEVICE_USER}@${DEVICE_IP}" << 'REMOTE_EOF'
+echo "Mount status:"
+mount | grep -E '/opt/docker|/mnt/docker-ext4' || echo "Mount not found"
+echo ""
+echo "Docker storage driver:"
+docker info 2>/dev/null | grep 'Storage Driver' || echo "Docker not running or not accessible"
+REMOTE_EOF
+
 echo ""
 echo "=== Deployment complete ==="
 echo ""
 echo "The Docker overlay2 storage script is now installed and configured."
+echo "Configuration has been applied immediately - no reboot required."
 echo ""
-echo "To test it now (without reboot):"
-echo "  ssh ${DEVICE_USER}@${DEVICE_IP}"
-echo "  /usr/bin/dockerd-overlay2.sh"
-echo ""
-read -p "Test the script now? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Running script..."
-    sshpass -p "$DEVICE_PASS" ssh -o StrictHostKeyChecking=no "${DEVICE_USER}@${DEVICE_IP}" "/usr/bin/dockerd-overlay2.sh"
-    echo ""
-    echo "Checking mount status:"
-    sshpass -p "$DEVICE_PASS" ssh -o StrictHostKeyChecking=no "${DEVICE_USER}@${DEVICE_IP}" "mount | grep -E '/opt/docker|/mnt/docker-ext4'"
-    echo ""
-    echo "Checking Docker storage driver:"
-    sshpass -p "$DEVICE_PASS" ssh -o StrictHostKeyChecking=no "${DEVICE_USER}@${DEVICE_IP}" "/etc/init.d/dockerd start && sleep 3 && docker info 2>/dev/null | grep 'Storage Driver'"
-fi
+echo "On next boot, the script will run automatically via /etc/rc.local"
 
