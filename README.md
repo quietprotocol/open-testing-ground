@@ -214,6 +214,9 @@ If you encounter issues:
 
 - Because it's prettier than scripts.
 
+- [https://github.com/gekmihesg/ansible-openwrt](https://github.com/gekmihesg/ansible-openwrt)
+- [https://github.com/imp1sh/ansible_managemynetwork](https://github.com/imp1sh/ansible_managemynetwork)
+
 ### PTT
 
 Some links
