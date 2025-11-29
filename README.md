@@ -210,6 +210,28 @@ If you encounter issues:
 
 - Get battery status working. Missing i2c stuff on openmanet?
 
+### Ansible
+
+- Because it's prettier than scripts.
+
+### PTT
+
+Some links
+
+- [https://resilience-theatre.com/wiki/doku.php?id=secureptt:introduction](https://resilience-theatre.com/wiki/doku.php?id=secureptt:introduction)
+- [https://github.com/skuep/AIOC?tab=readme-ov-file](https://github.com/skuep/AIOC?tab=readme-ov-file)
+- [https://www.aliexpress.com/item/1005009672034522.html](https://www.aliexpress.com/item/1005009672034522.html)
+
+### MediaMTX server
+
+- [https://www.thetaksyndicate.org/mediamtx-video-server](https://www.thetaksyndicate.org/mediamtx-video-server)
+- [https://www.thetaksyndicate.org/mediamtx-video-server](https://www.thetaksyndicate.org/mediamtx-video-server)
+
+### Mumble
+
+- [https://github.com/mumble-voip/mumble-docker](https://github.com/mumble-voip/mumble-docker)
+
+
 ## References
 
 - [OpenMANET OpenWrt Repository](https://github.com/OpenMANET/openwrt)
