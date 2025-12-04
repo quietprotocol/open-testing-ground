@@ -3,9 +3,9 @@
 # Usage: ./deploy_scripts.sh [device-ip] [device-password]
 # If .env file exists in the project root, it will be used for defaults
 
-# Get the project root directory (parent of this script's directory)
+# Get the project root directory (two levels up from this script's directory)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Load .env file from project root if it exists (for default values)
 if [ -f "${PROJECT_ROOT}/.env" ]; then
