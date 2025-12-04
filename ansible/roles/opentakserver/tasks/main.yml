@@ -6,6 +6,8 @@
     path: "{{ opentakserver_dir }}"
     state: directory
     mode: '0755'
+  tags:
+    - ots
 
 - name: Backup existing compose.yaml if it exists
   ansible.builtin.copy:
@@ -15,12 +17,16 @@
   when: compose_backup | default(true) | bool
   ignore_errors: yes
   changed_when: false
+  tags:
+    - ots
 
 - name: Copy compose.yaml to device
   ansible.builtin.copy:
     src: compose.yaml
     dest: "{{ opentakserver_dir }}/compose.yaml"
     mode: '0644'
+  tags:
+    - ots
 
 - name: Verify deployment
   ansible.builtin.command:
@@ -31,8 +37,12 @@
       grep -E "0\.0\.0\.0:[0-9]+:[0-9]+" {{ opentakserver_dir }}/compose.yaml | head -10
   register: ots_verify
   changed_when: false
+  tags:
+    - ots
 
 - name: Display deployment verification
   ansible.builtin.debug:
     msg: "{{ ots_verify.stdout_lines }}"
+  tags:
+    - ots
 

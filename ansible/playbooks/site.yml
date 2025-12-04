@@ -13,7 +13,6 @@
         name: docker
       tags:
         - docker
-        - storage
 
     - name: Include gps role
       include_role:
@@ -26,12 +25,10 @@
         name: atak
       tags:
         - atak
-        - tak-server
 
     - name: Include opentakserver role
       include_role:
         name: opentakserver
       tags:
-        - opentakserver
         - ots
 

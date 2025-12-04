@@ -129,7 +129,7 @@ ansible-playbook playbooks/site.yml --limit gateway1,gateway2
 
 ### Using Tags
 
-Deploy only specific tagged tasks:
+Deploy only specific roles using tags:
 
 ```bash
 # Only Docker-related tasks
@@ -142,7 +142,25 @@ ansible-playbook playbooks/site.yml --tags gps
 ansible-playbook playbooks/site.yml --tags atak
 
 # Only OpenTAKServer-related tasks
-ansible-playbook playbooks/site.yml --tags opentakserver
+ansible-playbook playbooks/site.yml --tags ots
+```
+
+**Available Tags:**
+- `docker` - Docker overlay2 storage configuration
+- `gps` - GPS initialization
+- `atak` - TAK Server deployment
+- `ots` - OpenTAKServer deployment
+
+**Examples:**
+```bash
+# Run only Docker role
+ansible-playbook playbooks/site.yml --tags docker
+
+# Run multiple roles
+ansible-playbook playbooks/site.yml --tags docker,gps
+
+# Skip a specific role
+ansible-playbook playbooks/site.yml --skip-tags atak
 ```
 
 ### Check Mode (Dry Run)
