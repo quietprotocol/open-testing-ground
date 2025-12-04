@@ -8,10 +8,10 @@ The Ansible setup replaces these bash scripts:
 
 | Old Bash Script | New Ansible Command |
 |----------------|---------------------|
-| `docker/deploy_dockerd_overlay2.sh` | `ansible-playbook playbooks/docker.yml` |
-| `gps/deploy_gps_init.sh` | `ansible-playbook playbooks/gps.yml` |
-| `atak/deploy_scripts.sh` | `ansible-playbook playbooks/atak.yml` |
-| `opentakserver/deploy_compose.sh` | `ansible-playbook playbooks/opentakserver.yml` |
+| `bash/docker/deploy_dockerd_overlay2.sh` | `ansible-playbook playbooks/docker.yml` |
+| `bash/gps/deploy_gps_init.sh` | `ansible-playbook playbooks/gps.yml` |
+| `bash/atak/deploy_scripts.sh` | `ansible-playbook playbooks/atak.yml` |
+| `bash/opentakserver/deploy_compose.sh` | `ansible-playbook playbooks/opentakserver.yml` |
 
 ## Key Differences
 

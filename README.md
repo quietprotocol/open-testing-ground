@@ -46,13 +46,13 @@ Build a custom OpenWrt image with Docker support and flash it to your device.
 
 ### 2. Configure Docker Storage
 
-**Location**: [`docker/`](docker/)
+**Location**: [`bash/docker/`](bash/docker/)
 
 Configure Docker to use the `overlay2` storage driver for optimal performance.
 
 **Steps:**
 ```bash
-cd docker
+cd bash/docker
 # Option 1: Use .env file (recommended)
 # From project root: cp .env.example .env
 # Edit .env with your device IP and password
@@ -71,19 +71,19 @@ This script:
 - OpenWrt device with Docker packages installed (from step 1)
 - SSH access to the device
 
-**See**: [`docker/README.md`](docker/README.md) for detailed configuration and troubleshooting.
+**See**: [`bash/docker/README.md`](bash/docker/README.md) for detailed configuration and troubleshooting.
 
 ---
 
 ### 3. Install TAK Server
 
-**Location**: [`atak/`](atak/)
+**Location**: [`bash/atak/`](bash/atak/)
 
 Install and configure TAK Server for ATAK/iTAK client support.
 
 **Steps:**
 ```bash
-cd atak
+cd bash/atak
 # Option 1: Use .env file (recommended)
 # From project root: cp .env.example .env
 # Edit .env with your device IP and password
@@ -107,19 +107,19 @@ cd ~/tak-server
 
 **Important**: Docker must be properly configured (step 2) before installing TAK Server, as TAK Server runs in Docker containers.
 
-**See**: [`atak/README.md`](atak/README.md) for detailed TAK Server installation and configuration.
+**See**: [`bash/atak/README.md`](bash/atak/README.md) for detailed TAK Server installation and configuration.
 
 ---
 
 ### 3.5. Install OpenTAKServer (Alternative)
 
-**Location**: [`opentakserver/`](opentakserver/)
+**Location**: [`bash/opentakserver/`](bash/opentakserver/)
 
 Install and configure [OpenTAKServer (OTS)](https://github.com/brian7704/OpenTAKServer), an open-source alternative to the official TAK Server.
 
 **Steps:**
 ```bash
-cd opentakserver
+cd bash/opentakserver
 # Option 1: Use .env file (recommended)
 # From project root: cp .env.example .env
 # Edit .env with your device IP and password
@@ -143,19 +143,19 @@ make up
 
 **Note**: This configuration uses modified ports (8880, 8440, 8881) to avoid conflicts with OpenWrt's uhttpd service.
 
-**See**: [`opentakserver/README.md`](opentakserver/README.md) for detailed OpenTAKServer installation and configuration.
+**See**: [`bash/opentakserver/README.md`](bash/opentakserver/README.md) for detailed OpenTAKServer installation and configuration.
 
 ---
 
 ### 4. Set Up GPS (Optional)
 
-**Location**: [`gps/`](gps/)
+**Location**: [`bash/gps/`](bash/gps/)
 
 Configure GPS initialization for WM1302 Pi Hat with Quectel L76K GNSS module.
 
 **Steps:**
 ```bash
-cd gps
+cd bash/gps
 # Option 1: Use .env file (recommended)
 # From project root: cp .env.example .env
 # Edit .env with your device IP and password
@@ -178,16 +178,18 @@ This script:
 
 **Note**: GPS setup is independent and can be done at any time after OpenWrt is installed.
 
-**See**: [`gps/README.md`](gps/README.md) for detailed GPS configuration and troubleshooting.
+**See**: [`bash/gps/README.md`](bash/gps/README.md) for detailed GPS configuration and troubleshooting.
 
 ## Directory Structure
 
 ```
 .
-├── atak/             # TAK Server installation scripts
-├── docker/           # Docker storage configuration
-├── gps/              # GPS initialization setup
-├── opentakserver/    # OpenTAKServer Docker Compose configuration
+├── ansible/          # Ansible playbooks and roles (recommended)
+├── bash/             # Legacy bash deployment scripts
+│   ├── atak/         # TAK Server installation scripts
+│   ├── docker/       # Docker storage configuration
+│   ├── gps/          # GPS initialization setup
+│   └── opentakserver/ # OpenTAKServer Docker Compose configuration
 ├── openwrt/          # OpenWrt firmware build instructions
 └── README.md         # This file
 ```
@@ -224,10 +226,10 @@ After completing all steps, verify your setup:
 If you encounter issues:
 
 1. **OpenWrt issues**: See [`openwrt/README.md`](openwrt/README.md) troubleshooting section
-2. **Docker issues**: See [`docker/README.md`](docker/README.md) troubleshooting section
-3. **GPS issues**: See [`gps/README.md`](gps/README.md) troubleshooting section
-4. **TAK Server issues**: See [`atak/README.md`](atak/README.md) troubleshooting section
-5. **OpenTAKServer issues**: See [`opentakserver/README.md`](opentakserver/README.md) troubleshooting section
+2. **Docker issues**: See [`bash/docker/README.md`](bash/docker/README.md) troubleshooting section
+3. **GPS issues**: See [`bash/gps/README.md`](bash/gps/README.md) troubleshooting section
+4. **TAK Server issues**: See [`bash/atak/README.md`](bash/atak/README.md) troubleshooting section
+5. **OpenTAKServer issues**: See [`bash/opentakserver/README.md`](bash/opentakserver/README.md) troubleshooting section
 
 ## TODOs
 
