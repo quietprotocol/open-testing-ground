@@ -14,8 +14,8 @@
     src: "{{ opentakserver_dir }}/compose.yaml"
     dest: "{{ opentakserver_dir }}/compose.yaml.backup.{{ ansible_date_time.epoch }}"
     remote_src: yes
-  when: compose_backup | default(true) | bool
-  ignore_errors: yes
+  when: compose_backup | default(true)
+  ignore_errors: true
   changed_when: false
   tags:
     - ots
