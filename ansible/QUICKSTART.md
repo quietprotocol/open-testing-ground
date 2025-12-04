@@ -55,7 +55,23 @@ Deploy everything:
 ansible-playbook playbooks/site.yml
 ```
 
-Or deploy specific components:
+Or deploy specific components using tags:
+
+```bash
+# Just Docker
+ansible-playbook playbooks/site.yml --tags docker
+
+# Just GPS
+ansible-playbook playbooks/site.yml --tags gps
+
+# Just TAK Server
+ansible-playbook playbooks/site.yml --tags atak
+
+# Just OpenTAKServer
+ansible-playbook playbooks/site.yml --tags ots
+```
+
+Or use the individual playbooks:
 
 ```bash
 # Just Docker

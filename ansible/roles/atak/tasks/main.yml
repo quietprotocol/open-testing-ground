@@ -6,12 +6,16 @@
     path: "{{ tak_server_dir }}"
     state: directory
     mode: '0755'
+  tags:
+    - atak
 
 - name: Ensure TAK Server scripts directory exists
   ansible.builtin.file:
     path: "{{ tak_server_scripts_dir }}"
     state: directory
     mode: '0755'
+  tags:
+    - atak
 
 - name: Copy TAK Server scripts to device
   ansible.builtin.copy:
@@ -22,20 +26,28 @@
     - setup.sh
     - certDP.sh
     - shareCerts.sh
+  tags:
+    - atak
 
 - name: Copy docker-compose.arm.yml to device
   ansible.builtin.copy:
     src: docker-compose.arm.yml
     dest: "{{ tak_server_dir }}/docker-compose.arm.yml"
     mode: '0644'
+  tags:
+    - atak
 
 - name: Verify deployment
   ansible.builtin.command:
     cmd: ls -lh {{ tak_server_scripts_dir }}/*.sh {{ tak_server_dir }}/docker-compose.arm.yml
   register: atak_verify
   changed_when: false
+  tags:
+    - atak
 
 - name: Display deployment verification
   ansible.builtin.debug:
     msg: "{{ atak_verify.stdout_lines }}"
+  tags:
+    - atak
 
