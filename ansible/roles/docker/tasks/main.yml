@@ -62,15 +62,14 @@
     - docker
 
 - name: Configure Docker daemon via UCI
-  ansible.builtin.command:
-    cmd: |
-      uci set dockerd.globals.storage_driver="{{ docker_storage_driver }}"
-      uci set dockerd.globals.data_root="{{ docker_data_root }}/"
-      uci set dockerd.globals.log_level="debug"
-      uci set dockerd.globals.iptables="0"
-      uci set dockerd.globals.ip6tables="0"
-      uci delete dockerd.globals.alt_config_file 2>/dev/null || true
-      uci commit dockerd
+  ansible.builtin.shell: |
+    uci set dockerd.globals.storage_driver="{{ docker_storage_driver }}"
+    uci set dockerd.globals.data_root="{{ docker_data_root }}/"
+    uci set dockerd.globals.log_level="debug"
+    uci set dockerd.globals.iptables="0"
+    uci set dockerd.globals.ip6tables="0"
+    uci delete dockerd.globals.alt_config_file 2>/dev/null || true
+    uci commit dockerd
   tags:
     - docker
 
@@ -116,8 +115,7 @@
     - docker
 
 - name: Verify Docker storage driver
-  ansible.builtin.command:
-    cmd: docker info | grep "Storage Driver"
+  ansible.builtin.shell: docker info | grep "Storage Driver"
   register: docker_storage_info
   changed_when: false
   failed_when: false
