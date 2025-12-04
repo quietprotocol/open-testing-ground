@@ -122,9 +122,27 @@
   tags:
     - docker
 
-- name: Display Docker storage driver info
+- name: Check if overlay2 storage driver is active
+  ansible.builtin.set_fact:
+    docker_storage_is_overlay2: "{{ docker_storage_info.stdout is search('overlay2') }}"
+  tags:
+    - docker
+
+- name: Display Docker storage driver status
   ansible.builtin.debug:
-    msg: "{{ docker_storage_info.stdout }}"
+    msg: |
+      Docker Storage Driver: {{ docker_storage_info.stdout }}
+      Overlay2 Active: {{ 'YES ✓' if docker_storage_is_overlay2 else 'NO ✗' }}
+      {% if not docker_storage_is_overlay2 %}
+      WARNING: Expected overlay2 storage driver but got something else!
+      {% endif %}
+  tags:
+    - docker
+
+- name: Fail if overlay2 is not active
+  ansible.builtin.fail:
+    msg: "Docker storage driver is not overlay2. Current driver: {{ docker_storage_info.stdout }}"
+  when: not docker_storage_is_overlay2
   tags:
     - docker
 
