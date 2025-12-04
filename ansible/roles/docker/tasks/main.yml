@@ -44,7 +44,7 @@
       mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 {{ docker_image_path }}
   when: 
     - not usb_device_stat.stat.exists
-    - not docker_image_stat.stat.exists
+    - not (docker_image_stat.stat.exists | default(false))
   changed_when: true
   tags:
     - docker

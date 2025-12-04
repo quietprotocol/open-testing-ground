@@ -4,14 +4,14 @@ START=15
 STOP=90
 
 # WM1302 Pi HAT + Quectel L76K(B)
-GPIO_RST=25       # GPS_RST (active high pulse)
-GPIO_WAKE=12      # GPS_WAKE_UP (high = standby, low = active)
-TTY_DEV="/dev/ttyAMA0"
-BAUD=9600
+GPIO_RST={{ gps_gpio_rst }}       # GPS_RST (active high pulse)
+GPIO_WAKE={{ gps_gpio_wake }}      # GPS_WAKE_UP (high = standby, low = active)
+TTY_DEV="{{ gps_tty_device }}"
+BAUD={{ gps_baud }}
 
 log() {
     logger -t gps-init "$@"
-    [ "$VERBOSE" != "1" ] && echo "gps-init: $@"
+    [ "$VERBOSE" = "1" ] && echo "gps-init: $@"
 }
 
 export_gpio() {
@@ -96,7 +96,7 @@ gps_off() {
     set_gpio_out "$GPIO_RST"
     set_gpio_out "$GPIO_WAKE"
     
-    # Ensure GPIO 25 is LOW (not in reset state)
+    # Ensure GPIO RST is LOW (not in reset state)
     set_gpio_val "$GPIO_RST" 0
     
     # Put GPS in standby (HIGH = standby)

@@ -1,9 +1,9 @@
 ---
 # GPS initialization role
 
-- name: Copy gps-init script to device
-  ansible.builtin.copy:
-    src: gps-init
+- name: Deploy gps-init script to device
+  ansible.builtin.template:
+    src: gps-init.j2
     dest: /etc/init.d/gps-init
     mode: '0755'
     owner: root

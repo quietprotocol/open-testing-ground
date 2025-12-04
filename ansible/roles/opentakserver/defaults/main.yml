@@ -1,0 +1,6 @@
+---
+# Default variables for opentakserver role
+
+opentakserver_dir: ~/ots-docker
+compose_backup: true
+

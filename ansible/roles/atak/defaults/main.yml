@@ -1,0 +1,6 @@
+---
+# Default variables for atak role
+
+tak_server_dir: ~/tak-server
+tak_server_scripts_dir: "{{ tak_server_dir }}/scripts"
+

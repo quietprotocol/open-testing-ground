@@ -1,0 +1,8 @@
+---
+# Default variables for gps role
+
+gps_gpio_rst: 25
+gps_gpio_wake: 12
+gps_tty_device: /dev/ttyAMA0
+gps_baud: 9600
+

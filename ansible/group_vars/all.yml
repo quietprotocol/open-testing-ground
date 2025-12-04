@@ -1,24 +1,6 @@
 ---
-# Default variables for all hosts
+# Global variables for all hosts
+# Role-specific variables are defined in each role's defaults/main.yml
+
 device_user: root
-
-# Docker configuration
-docker_storage_driver: overlay2
-docker_data_root: /opt/docker
-docker_image_path: /overlay/docker.ext4
-docker_image_size_gb: 20
-docker_usb_device: /dev/sda1
-
-# GPS configuration
-gps_gpio_rst: 25
-gps_gpio_wake: 12
-gps_tty_device: /dev/ttyAMA0
-gps_baud: 9600
-
-# TAK Server configuration
-tak_server_dir: ~/tak-server
-tak_server_scripts_dir: "{{ tak_server_dir }}/scripts"
-
-# OpenTAKServer configuration
-opentakserver_dir: ~/ots-docker
 

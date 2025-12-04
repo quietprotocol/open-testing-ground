@@ -1,0 +1,9 @@
+---
+# Default variables for docker role
+
+docker_storage_driver: overlay2
+docker_data_root: /opt/docker
+docker_image_path: /overlay/docker.ext4
+docker_image_size_gb: 20
+docker_usb_device: /dev/sda1
+

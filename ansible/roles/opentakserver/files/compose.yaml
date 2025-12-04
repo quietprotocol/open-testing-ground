@@ -4,7 +4,10 @@ services:
 # OpenTakServer - Cot Server
 # ****************************************
   ots:
-    user: "${UID:-0}:${GID:-0}"
+    # Note: Docker Compose only expands environment variables, not shell variables
+    # For OpenWrt devices running as root, use 0:0
+    # To use custom UID/GID, set UID and GID environment variables or create a .env file
+    user: "0:0"
     image: ghcr.io/milsimdk/ots-docker-image:latest
     container_name: ots
     hostname: opentakserver

@@ -75,7 +75,12 @@ Then reference it in your inventory or group_vars.
 
 ### 3. Variable Customization
 
-Edit `group_vars/all.yml` to customize default values for all devices, or create host-specific variables in `host_vars/<hostname>.yml`.
+Variables are defined in each role's `defaults/main.yml` file. To customize values:
+
+- **For all devices**: Override in `group_vars/all.yml` or `host_vars/<hostname>.yml`
+- **For specific devices**: Create `host_vars/<hostname>.yml` with device-specific values
+
+Each role's default variables are documented in the Roles section below.
 
 ## Usage
 
@@ -193,12 +198,14 @@ Configures Docker to use the `overlay2` storage driver with optimized settings f
 - Sets up ext4 loopback filesystem or USB device for Docker storage
 - Updates `/etc/rc.local` for persistent configuration
 
-**Variables:**
+**Variables** (defined in `roles/docker/defaults/main.yml`):
 - `docker_storage_driver`: Storage driver (default: `overlay2`)
 - `docker_data_root`: Docker data directory (default: `/opt/docker`)
 - `docker_image_path`: Path to ext4 image file (default: `/overlay/docker.ext4`)
 - `docker_image_size_gb`: Size of ext4 image in GB (default: `20`)
 - `docker_usb_device`: USB device path (default: `/dev/sda1`)
+
+Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 ### gps
 
@@ -209,11 +216,13 @@ Configures GPS initialization for WM1302 Pi Hat with Quectel L76K GNSS module.
 - Enables GPS init script to run at boot
 - Verifies GPS configuration
 
-**Variables:**
+**Variables** (defined in `roles/gps/defaults/main.yml`):
 - `gps_gpio_rst`: GPIO pin for GPS reset (default: `25`)
 - `gps_gpio_wake`: GPIO pin for GPS wake control (default: `12`)
 - `gps_tty_device`: TTY device for GPS (default: `/dev/ttyAMA0`)
 - `gps_baud`: Baud rate (default: `9600`)
+
+Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 ### atak
 
@@ -225,9 +234,11 @@ Deploys TAK Server scripts and configuration files.
 - Copies `docker-compose.arm.yml` configuration
 - Verifies deployment
 
-**Variables:**
+**Variables** (defined in `roles/atak/defaults/main.yml`):
 - `tak_server_dir`: TAK Server directory (default: `~/tak-server`)
 - `tak_server_scripts_dir`: Scripts directory (default: `~/tak-server/scripts`)
+
+Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 **Note:** After deployment, you still need to run `setup.sh` on the device manually or via Ansible ad-hoc command.
 
@@ -241,9 +252,11 @@ Deploys OpenTAKServer Docker Compose configuration.
 - Copies `compose.yaml` configuration
 - Verifies deployment
 
-**Variables:**
+**Variables** (defined in `roles/opentakserver/defaults/main.yml`):
 - `opentakserver_dir`: OpenTAKServer directory (default: `~/ots-docker`)
 - `compose_backup`: Whether to backup existing compose.yaml (default: `true`)
+
+Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 **Note:** After deployment, you need to run `make up` or `docker compose up -d` on the device.
 
@@ -322,7 +335,7 @@ ansible/
 │   ├── hosts.yml           # Inventory file (create from example)
 │   └── hosts.example.yml   # Example inventory
 ├── group_vars/
-│   └── all.yml             # Default variables for all hosts
+│   └── all.yml             # Global variables (optional overrides)
 ├── host_vars/              # Host-specific variables (optional)
 │   └── gateway1.yml       # Example host-specific vars
 ├── playbooks/
@@ -333,16 +346,22 @@ ansible/
 │   └── opentakserver.yml  # OpenTAKServer-only playbook
 └── roles/
     ├── docker/
+    │   ├── defaults/
+    │   │   └── main.yml   # Docker role default variables
     │   ├── tasks/
     │   │   └── main.yml
     │   └── files/
     │       └── dockerd-overlay2.sh
     ├── gps/
+    │   ├── defaults/
+    │   │   └── main.yml   # GPS role default variables
     │   ├── tasks/
     │   │   └── main.yml
-    │   └── files/
-    │       └── gps-init
+    │   └── templates/
+    │       └── gps-init.j2
     ├── atak/
+    │   ├── defaults/
+    │   │   └── main.yml   # ATAK role default variables
     │   ├── tasks/
     │   │   └── main.yml
     │   └── files/
@@ -351,6 +370,8 @@ ansible/
     │       ├── shareCerts.sh
     │       └── docker-compose.arm.yml
     └── opentakserver/
+        ├── defaults/
+        │   └── main.yml   # OpenTAKServer role default variables
         ├── tasks/
         │   └── main.yml
         └── files/

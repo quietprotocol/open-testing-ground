@@ -161,6 +161,6 @@ You can keep both bash scripts and Ansible:
 
 1. Read `QUICKSTART.md` for a quick start guide
 2. Read `README.md` for detailed documentation
-3. Customize `group_vars/all.yml` for your environment
+3. Customize role variables by overriding them in `group_vars/all.yml` or `host_vars/<hostname>.yml`
 4. Consider using Ansible Vault for password management
 
