@@ -57,7 +57,7 @@
     value: '0'
     state: present
     sysctl_set: yes
-    ignore_errors: yes
+    ignoreerrors: yes
   tags:
     - docker
 
@@ -90,7 +90,7 @@
   ansible.builtin.service:
     name: dockerd
     state: stopped
-  ignore_errors: yes
+  ignore_errors: true
   tags:
     - docker
 
@@ -105,7 +105,7 @@
   ansible.builtin.service:
     name: dockerd
     state: started
-  ignore_errors: yes
+  ignore_errors: true
   tags:
     - docker
 
