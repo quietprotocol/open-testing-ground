@@ -11,10 +11,20 @@
   tags:
     - gps
 
+- name: Check if GPS init script is already enabled
+  ansible.builtin.stat:
+    path: /etc/rc.d/S15gps-init
+  register: gps_init_enabled
+  tags:
+    - gps
+
 - name: Enable GPS init script to run at boot
   ansible.builtin.command:
     cmd: /etc/init.d/gps-init enable
-  changed_when: true
+  when: not gps_init_enabled.stat.exists
+  register: gps_enable_result
+  changed_when: gps_enable_result.rc == 0
+  failed_when: gps_enable_result.rc != 0
   tags:
     - gps
 
