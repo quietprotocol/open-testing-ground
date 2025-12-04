@@ -30,10 +30,12 @@
     - docker
 
 - name: Check if Docker ext4 image exists
-  ansible.builtin.stat:
-    path: "{{ docker_image_path }}"
+  ansible.builtin.command:
+    cmd: test -f {{ docker_image_path }}
   register: docker_image_stat
   when: not usb_device_stat.stat.exists
+  changed_when: false
+  failed_when: false
   tags:
     - docker
 
@@ -44,7 +46,7 @@
       mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 {{ docker_image_path }}
   when: 
     - not usb_device_stat.stat.exists
-    - not (docker_image_stat.stat.exists | default(false))
+    - docker_image_stat.rc != 0
   changed_when: true
   tags:
     - docker
