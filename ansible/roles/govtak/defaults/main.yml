@@ -7,6 +7,7 @@ tak_server_repo_url: "https://github.com/Cloud-RF/tak-server.git"
 tak_server_zip_path: "~/Downloads/takserver-docker-5.6-RELEASE-2.zip"  # PATH: Local path on Ansible control machine (where file is on your computer)
 tak_server_zip_name: ""  # NAME: Filename on device (optional - auto-detected from tak_server_zip_path basename if not set)
 tak_server_run_setup: false  # Set to true to automatically run setup.sh after deployment
+tak_server_force_setup: false  # Set to true to force re-setup even if TAK Server is already configured (WARNING: Deletes existing data!)
 tak_server_certs_local_dir: "{{ playbook_dir }}/../artifacts/govtak/certs"  # Local directory to store downloaded certificates
 tak_server_user_accounts: ["martin", "leon"]  # List of user accounts to create certificates for
 

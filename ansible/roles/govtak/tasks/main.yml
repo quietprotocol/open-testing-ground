@@ -159,13 +159,72 @@
   tags:
     - govtak
 
+- name: Check if TAK Server is already configured
+  ansible.builtin.stat:
+    path: "{{ tak_server_dir }}/tak/CoreConfig.xml"
+  register: tak_server_configured
+  when: tak_server_run_setup | bool
+  tags:
+    - govtak
+    - setup
+
+- name: Check if TAK Server containers are running
+  ansible.builtin.shell: |
+    docker ps --filter "name=tak" --format "{{ '{{' }}.Names{{ '}}' }}" | grep -q tak && echo "RUNNING" || echo "NOT_RUNNING"
+  when: 
+    - tak_server_run_setup | bool
+    - tak_server_configured.stat.exists
+  register: tak_containers_running
+  changed_when: false
+  failed_when: false
+  tags:
+    - govtak
+    - setup
+
+- name: Display TAK Server already configured message
+  ansible.builtin.debug:
+    msg: |
+      TAK Server is already configured (tak directory exists).
+      Containers are {{ 'running' if tak_containers_running.stdout == 'RUNNING' else 'stopped' }}.
+      Skipping setup to preserve existing configuration.
+      
+      To re-run setup, you must manually clean up:
+      1. Stop containers: cd {{ tak_server_dir }} && docker-compose -f docker-compose.arm.yml down
+      2. Remove tak directory: rm -rf {{ tak_server_dir }}/tak
+      3. Remove docker volume: docker volume rm tak-server_db_data
+      
+      Or set tak_server_force_setup=true to force cleanup and re-setup (WARNING: Deletes all data!)
+  when:
+    - tak_server_run_setup | bool
+    - tak_server_configured.stat.exists
+    - tak_server_force_setup | default(false) | bool == false
+  tags:
+    - govtak
+    - setup
+
+- name: Clean up existing TAK Server installation (force setup)
+  ansible.builtin.shell: |
+    cd {{ tak_server_dir }}
+    docker-compose -f docker-compose.arm.yml down 2>/dev/null || true
+    rm -rf tak /tmp/takserver
+    docker volume rm --force tak-server_db_data 2>/dev/null || true
+  when:
+    - tak_server_run_setup | bool
+    - tak_server_configured.stat.exists
+    - tak_server_force_setup | default(false) | bool
+  tags:
+    - govtak
+    - setup
+
 - name: Ensure local certs directory exists
   ansible.builtin.file:
     path: "{{ tak_server_certs_local_dir }}"
     state: directory
     mode: '0755'
   delegate_to: localhost
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   tags:
     - govtak
     - setup
@@ -174,9 +233,11 @@
   ansible.builtin.shell: |
     cd {{ tak_server_dir }}
     chmod +x scripts/setup.sh
-    ./scripts/setup.sh 2>&1 | tee /tmp/setup_output.txt
+    echo "y" | ./scripts/setup.sh 2>&1 | tee /tmp/setup_output.txt
     echo "SETUP_COMPLETE"
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   async: 600
   poll: 10
   register: setup_result
@@ -188,7 +249,9 @@
   ansible.builtin.wait_for:
     path: /tmp/setup_output.txt
     state: present
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   tags:
     - govtak
     - setup
@@ -197,7 +260,9 @@
   ansible.builtin.slurp:
     src: /tmp/setup_output.txt
   register: setup_output_file
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   tags:
     - govtak
     - setup
@@ -205,10 +270,11 @@
 - name: Extract passwords from setup output
   ansible.builtin.set_fact:
     setup_output_text: "{{ setup_output_file.content | b64decode | default('') }}"
-    tak_admin_password: "{{ (setup_output_file.content | b64decode | default('')) | regex_search('Admin password: ([^\\n\\r]+)', '\\1') | first | default('Password not found in output') }}"
-    tak_postgres_password: "{{ (setup_output_file.content | b64decode | default('')) | regex_search('PostgreSQL password: ([^\\n\\r]+)', '\\1') | first | default('Password not found in output') }}"
+    tak_admin_password: "{{ ((setup_output_file.content | b64decode | default('')) | regex_search('Admin password: ([^\\n\\r]+)', '\\1') | default([])) | first | default('Password not found in output') }}"
+    tak_postgres_password: "{{ ((setup_output_file.content | b64decode | default('')) | regex_search('PostgreSQL password: ([^\\n\\r]+)', '\\1') | default([])) | first | default('Password not found in output') }}"
   when: 
     - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
     - setup_output_file.content is defined
   tags:
     - govtak
@@ -224,7 +290,10 @@
       ============================================
       Web interface: https://{{ ansible_host | default(inventory_hostname) }}:8443
       IMPORTANT: Save these passwords - they won't be shown again!
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
+    - tak_admin_password is defined
   tags:
     - govtak
     - setup
@@ -233,7 +302,9 @@
   ansible.builtin.pause:
     seconds: 30
     prompt: "Waiting 30 seconds for TAK Server to fully initialize before creating user certificates..."
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   tags:
     - govtak
     - setup
@@ -241,7 +312,9 @@
 - name: Get TAK container name
   ansible.builtin.shell: |
     docker ps --filter "name=tak" --format "{{ '{{' }}.Names{{ '}}' }}" | head -1
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   register: tak_container_name_result
   changed_when: false
   tags:
@@ -251,7 +324,9 @@
 - name: Set TAK container name
   ansible.builtin.set_fact:
     tak_container_name: "{{ tak_container_name_result.stdout | default('tak-server-tak-1') }}"
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   tags:
     - govtak
     - setup
@@ -260,7 +335,9 @@
   ansible.builtin.shell: |
     docker exec -w /opt/tak/certs {{ tak_container_name }} ./makeCert.sh client "{{ item }}"
   loop: "{{ tak_server_user_accounts }}"
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   register: makecert_result
   tags:
     - govtak
@@ -272,6 +349,7 @@
   loop: "{{ makecert_result.results | default([]) }}"
   when: 
     - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
     - makecert_result.results is defined
   tags:
     - govtak
@@ -282,7 +360,9 @@
     cd {{ tak_server_dir }}
     ./scripts/certDP.sh "{{ item }}"
   loop: "{{ tak_server_user_accounts }}"
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   tags:
     - govtak
     - setup
@@ -292,7 +372,9 @@
     paths: "{{ tak_server_dir }}/tak/certs/files"
     patterns: "*.{p12,zip,pem}"
     recurse: false
-  when: tak_server_run_setup | bool
+  when: 
+    - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   register: cert_files
   tags:
     - govtak
@@ -306,6 +388,7 @@
   loop: "{{ cert_files.files }}"
   when: 
     - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
     - cert_files.files | length > 0
   tags:
     - govtak
@@ -319,6 +402,7 @@
       User accounts created: {{ tak_server_user_accounts | join(', ') }}
   when: 
     - tak_server_run_setup | bool
+    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
     - cert_files.files | length > 0
   tags:
     - govtak
