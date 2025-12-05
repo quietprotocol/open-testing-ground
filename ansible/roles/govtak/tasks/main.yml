@@ -367,32 +367,53 @@
     - govtak
     - setup
 
+- name: Check if TAK Server is configured (for certs tag)
+  ansible.builtin.stat:
+    path: "{{ tak_server_dir }}/tak/CoreConfig.xml"
+  register: tak_server_configured_for_certs
+  tags:
+    - certs
+
 - name: Find all certificate files on device
   ansible.builtin.find:
     paths: "{{ tak_server_dir }}/tak/certs/files"
-    patterns: "*.{p12,zip,pem}"
+    patterns:
+      - "*.p12"
+      - "*.zip"
+      - "*.pem"
     recurse: false
   when: 
-    - tak_server_run_setup | bool
-    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
+    - (tak_server_run_setup | bool and ((not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool))) or (tak_server_configured_for_certs.stat.exists | default(false))
   register: cert_files
   tags:
     - govtak
     - setup
+    - certs
+
+- name: Ensure local certs directory exists (for certs tag)
+  ansible.builtin.file:
+    path: "{{ tak_server_certs_local_dir }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  when: tak_server_configured_for_certs.stat.exists | default(false)
+  tags:
+    - certs
 
 - name: Download all certificates to local machine
   ansible.builtin.fetch:
     src: "{{ item.path }}"
     dest: "{{ tak_server_certs_local_dir }}/{{ item.path | basename }}"
     flat: yes
-  loop: "{{ cert_files.files }}"
+  loop: "{{ cert_files.files | default([]) }}"
   when: 
-    - tak_server_run_setup | bool
-    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
+    - tak_server_configured_for_certs.stat.exists | default(false)
+    - cert_files.files is defined
     - cert_files.files | length > 0
   tags:
     - govtak
     - setup
+    - certs
 
 - name: Display certificate download summary
   ansible.builtin.debug:
@@ -401,10 +422,11 @@
       Files downloaded: {{ cert_files.files | length }}
       User accounts created: {{ tak_server_user_accounts | join(', ') }}
   when: 
-    - tak_server_run_setup | bool
-    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
+    - tak_server_configured_for_certs.stat.exists | default(false)
+    - cert_files.files is defined
     - cert_files.files | length > 0
   tags:
     - govtak
     - setup
+    - certs
 

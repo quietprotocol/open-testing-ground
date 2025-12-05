@@ -25,6 +25,8 @@
         name: govtak
       tags:
         - govtak
+        - certs
+        - setup
 
     - name: Include opentakserver role
       include_role:
