@@ -244,32 +244,42 @@
     - govtak
     - setup
 
-- name: Monitor setup progress
+- name: Monitor and display setup progress
   ansible.builtin.shell: |
-    # Get current line count
-    current_lines=$(wc -l < /tmp/setup_output.txt 2>/dev/null || echo "0")
-    # Get last 10 lines of output
-    tail -n 10 /tmp/setup_output.txt 2>/dev/null || echo "Waiting for setup to start..."
+    echo "============================================================"
+    echo "Setup Progress Check:"
+    echo "============================================================"
+    if [ -f /tmp/setup_output.txt ]; then
+      if grep -q "MAKE A NOTE OF YOUR PASSWORDS" /tmp/setup_output.txt 2>/dev/null; then
+        echo "STATUS: SETUP_COMPLETE"
+        echo ""
+        echo "Last 5 lines of output:"
+        tail -n 5 /tmp/setup_output.txt
+        echo "============================================================"
+        exit 0
+      else
+        echo "STATUS: SETUP_IN_PROGRESS"
+        echo ""
+        echo "Last 10 lines of output:"
+        tail -n 10 /tmp/setup_output.txt
+        echo "============================================================"
+        exit 1
+      fi
+    else
+      echo "STATUS: WAITING_FOR_START"
+      echo "Output file not found yet. Waiting for setup to start..."
+      echo "============================================================"
+      exit 1
+    fi
   when: 
     - tak_server_run_setup | bool
     - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
   register: setup_progress
   changed_when: false
-  failed_when: false
-  until: setup_progress.stdout is search("MAKE A NOTE OF YOUR PASSWORDS")
+  failed_when: setup_progress.rc != 0
+  until: setup_progress.rc == 0
   retries: 240
   delay: 10
-  tags:
-    - govtak
-    - setup
-
-- name: Display setup progress
-  ansible.builtin.debug:
-    msg: "{{ setup_progress.stdout_lines }}"
-  when: 
-    - tak_server_run_setup | bool
-    - (not tak_server_configured.stat.exists) or (tak_server_force_setup | default(false) | bool)
-    - setup_progress.stdout_lines is defined
   tags:
     - govtak
     - setup
