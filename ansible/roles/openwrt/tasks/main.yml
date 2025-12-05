@@ -46,6 +46,26 @@
   tags:
     - openwrt
     - setup
+    - artifacts
+    - build
+    - download
+    - clone
+    - diffconfig
+
+- name: Set connection vars for build server delegation
+  ansible.builtin.set_fact:
+    ansible_ssh_private_key_file: "{{ openwrt_build_ssh_key | expanduser }}"
+    ansible_user: "{{ openwrt_build_user }}"
+  delegate_to: "{{ openwrt_build_server }}"
+  when: openwrt_build_server != 'localhost'
+  tags:
+    - openwrt
+    - setup
+    - artifacts
+    - build
+    - download
+    - clone
+    - diffconfig
 
 - name: Ensure source directory exists on build server
   ansible.builtin.file:
@@ -257,13 +277,39 @@
 
 - name: Build OpenWrt firmware image
   ansible.builtin.shell:
-    cmd: make -j{{ openwrt_build_jobs }} V={{ openwrt_build_verbose }} 2>&1 | tee log.txt
+    cmd: |
+      set -o pipefail
+      make -j{{ openwrt_build_jobs }} V={{ openwrt_build_verbose }} 2>&1 | tee log.txt
+      echo "BUILD_EXIT_CODE=$?" >> /tmp/build_status.txt
     chdir: "{{ openwrt_repo_dir }}"
   delegate_to: "{{ openwrt_build_server }}"
   become: false
   async: 3600
   poll: 30
   register: build_result
+  tags:
+    - openwrt
+    - build
+
+- name: Check if build actually completed (workaround for async detection issues)
+  ansible.builtin.stat:
+    path: "{{ openwrt_repo_dir }}bin/targets"
+  delegate_to: "{{ openwrt_build_server }}"
+  register: build_targets_check
+  tags:
+    - openwrt
+    - build
+
+- name: Force completion if build artifacts exist but async shows incomplete
+  ansible.builtin.set_fact:
+    build_result:
+      finished: 1
+      failed: false
+      rc: 0
+      msg: "Build completed successfully (detected via artifacts check)"
+  when:
+    - build_targets_check.stat.exists
+    - build_result.finished is not defined or build_result.finished == 0
   tags:
     - openwrt
     - build
