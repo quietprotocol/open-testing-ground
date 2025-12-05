@@ -32,6 +32,13 @@
       tags:
         - ots
 
+    - name: Include openwrt role
+      include_role:
+        name: openwrt
+      tags:
+        - flash
+        - openwrt
+
 - name: Deploy OpenWrt Docker Diffconfig to Build Server
   hosts: localhost
   gather_facts: no

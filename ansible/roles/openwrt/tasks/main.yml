@@ -482,6 +482,7 @@
   ansible.builtin.stat:
     path: "{{ openwrt_flash_image_local }}"
   register: local_image_stat
+  delegate_to: localhost
   when: flash_image_is_local | bool
   tags:
     - openwrt
