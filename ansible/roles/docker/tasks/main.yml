@@ -40,10 +40,9 @@
     - docker
 
 - name: Create Docker ext4 image (when USB not available)
-  ansible.builtin.command:
-    cmd: |
-      dd if=/dev/zero of={{ docker_image_path }} bs=1M count=0 seek=$(({{ docker_image_size_gb }}*1024))
-      mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 {{ docker_image_path }}
+  ansible.builtin.shell: |
+    dd if=/dev/zero of={{ docker_image_path }} bs=1M count=0 seek=$(({{ docker_image_size_gb }}*1024))
+    mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 {{ docker_image_path }}
   when: 
     - not usb_device_stat.stat.exists
     - docker_image_stat.rc != 0
