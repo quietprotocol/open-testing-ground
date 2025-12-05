@@ -14,18 +14,18 @@ The Ansible setup provides:
 ## Quick Start
 
 1. **Copy and configure inventory:**
-   ```bash
+```bash
    cp inventory/hosts.example.yml inventory/hosts.yml
    # Edit inventory/hosts.yml with your device information
-   ```
+```
 
 2. **Run the main playbook:**
-   ```bash
+```bash
    ansible-playbook playbooks/site.yml
-   ```
+```
 
 3. **Run specific roles:**
-   ```bash
+```bash
    ansible-playbook playbooks/site.yml --tags docker
    ansible-playbook playbooks/site.yml --tags gps
    ansible-playbook playbooks/site.yml --tags atak
@@ -233,6 +233,51 @@ After a successful build, artifacts are downloaded to:
 - Build progress is checked every 30 seconds - the playbook will wait for completion
 - Build artifacts are automatically downloaded to your local machine after completion
 
+**Flashing Firmware:**
+
+The openwrt role also supports flashing firmware images to devices. You can flash images that are either:
+- **Local on the device**: Already present on the device filesystem
+- **Local on your machine**: Will be transferred to the device before flashing
+
+**Flash Variables:**
+- `openwrt_flash_image_path`: Path to firmware image on the device (e.g., `/tmp/firmware.img.gz`)
+- `openwrt_flash_image_local`: Local path on Ansible control machine (will be transferred to device)
+- `openwrt_flash_keep_settings`: Preserve settings during flash (default: `true`)
+- `openwrt_flash_device_path`: Temporary path on device for transferred images (default: `/tmp/firmware.img.gz`)
+
+**Flash Examples:**
+
+```bash
+# Flash image that's already on the device
+ansible-playbook playbooks/site.yml --tags flash -e "openwrt_flash_image_path=/tmp/firmware.img.gz"
+
+# Flash image from local machine (will be transferred first)
+ansible-playbook playbooks/site.yml --tags flash -e "openwrt_flash_image_local=../artifacts/openwrt/firmware.img.gz"
+
+# Flash without preserving settings
+ansible-playbook playbooks/site.yml --tags flash \
+  -e "openwrt_flash_image_local=../artifacts/openwrt/firmware.img.gz" \
+  -e "openwrt_flash_keep_settings=false"
+
+# Flash to specific device
+ansible-playbook playbooks/site.yml --tags flash --limit gateway \
+  -e "openwrt_flash_image_local=../artifacts/openwrt/firmware.img.gz"
+```
+
+**Flash Process:**
+1. Validates image configuration (either `openwrt_flash_image_path` or `openwrt_flash_image_local` must be set)
+2. Transfers image to device if using `openwrt_flash_image_local`
+3. Verifies image exists on device
+4. Flashes firmware using `sysupgrade` (with `-k` flag to preserve settings if enabled)
+5. Waits for device to reboot (device will disconnect during flash)
+6. Verifies device comes back online after reboot
+
+**Important Notes:**
+- Flashing will **reboot the device** - ensure you have console access or reliable network connectivity
+- The device will be unreachable for 1-5 minutes during the flash and reboot process
+- Settings are preserved by default (`openwrt_flash_keep_settings: true`)
+- Use `sysupgrade` compatible images (`.img.gz` files with `-sysupgrade` in the name)
+
 ## Ad-Hoc Commands
 
 Test connectivity:
@@ -288,9 +333,9 @@ ansible openmanet_devices -m shell -a "cd ~/ots-docker && docker compose ps"
    ```
 
 5. **Use vault** for sensitive data:
-   ```bash
+```bash
    ansible-vault encrypt group_vars/all.yml
-   ```
+```
 
 ## Troubleshooting
 
@@ -298,7 +343,7 @@ ansible openmanet_devices -m shell -a "cd ~/ots-docker && docker compose ps"
 
 If you can't connect to devices:
 
-```bash
+   ```bash
 # Test SSH connectivity
 ansible openmanet_devices -m ping
 
@@ -306,8 +351,8 @@ ansible openmanet_devices -m ping
 chmod 600 ~/.ssh/id_rsa
 
 # Test with verbose output
-ansible-playbook playbooks/site.yml -vvv
-```
+   ansible-playbook playbooks/site.yml -vvv
+   ```
 
 ### Permission Issues
 

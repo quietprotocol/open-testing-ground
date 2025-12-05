@@ -351,6 +351,7 @@
   delegate_to: "{{ openwrt_build_server }}"
   loop: "{{ firmware_images.files }}"
   when: firmware_images.files | length > 0
+  register: downloaded_firmware_images
   tags:
     - openwrt
     - artifacts
@@ -371,6 +372,167 @@
       Build artifacts downloaded to: {{ openwrt_local_artifacts_dir }}
       - Build log: {{ openwrt_local_build_log }}
       - Firmware images: {{ firmware_images.files | length }} file(s)
+      - Images available for flashing: {{ firmware_images.files | map(attribute='path') | map('basename') | list | join(', ') }}
   tags:
     - openwrt
     - artifacts
+
+# ============================================================================
+# Flash Firmware
+# ============================================================================
+# Note: Flashing firmware will reboot the device. Use tags to run only flashing.
+# If artifacts were downloaded, they will be used automatically.
+
+- name: Find downloaded firmware images in artifacts directory
+  ansible.builtin.find:
+    paths: "{{ openwrt_local_artifacts_dir }}"
+    patterns: "*.img.gz"
+    recurse: false
+  register: local_firmware_images
+  delegate_to: localhost
+  tags:
+    - openwrt
+    - flash
+
+- name: Set default flash image from artifacts if not specified
+  ansible.builtin.set_fact:
+    openwrt_flash_image_local: "{{ local_firmware_images.files[0].path if (openwrt_flash_image_local == '' and openwrt_flash_image_path == '' and local_firmware_images.files | length > 0) else openwrt_flash_image_local }}"
+  tags:
+    - openwrt
+    - flash
+
+- name: Display available firmware images
+  ansible.builtin.debug:
+    msg: |
+      Available firmware images in artifacts:
+      {{ local_firmware_images.files | map(attribute='path') | list | join('\n      ') }}
+      Using: {{ openwrt_flash_image_local if openwrt_flash_image_local != '' else openwrt_flash_image_path if openwrt_flash_image_path != '' else 'None specified' }}
+  when: local_firmware_images.files | length > 0
+  tags:
+    - openwrt
+    - flash
+
+- name: Validate flash image configuration
+  ansible.builtin.assert:
+    that:
+      - openwrt_flash_image_path != "" or openwrt_flash_image_local != ""
+    fail_msg: |
+      Either openwrt_flash_image_path (remote/local on device) or openwrt_flash_image_local (local file to transfer) must be set.
+      Available images in artifacts: {{ local_firmware_images.files | map(attribute='path') | list | join(', ') if local_firmware_images.files | length > 0 else 'None found' }}
+    success_msg: "Flash image configuration is valid"
+  tags:
+    - openwrt
+    - flash
+
+- name: Determine flash image source
+  ansible.builtin.set_fact:
+    flash_image_is_local: "{{ openwrt_flash_image_local != '' }}"
+    flash_image_source: "{{ openwrt_flash_image_local if openwrt_flash_image_local != '' else openwrt_flash_image_path }}"
+  tags:
+    - openwrt
+    - flash
+
+- name: Check if local image file exists
+  ansible.builtin.stat:
+    path: "{{ openwrt_flash_image_local }}"
+  register: local_image_stat
+  when: flash_image_is_local | bool
+  tags:
+    - openwrt
+    - flash
+
+- name: Fail if local image file does not exist
+  ansible.builtin.fail:
+    msg: "Local firmware image not found: {{ openwrt_flash_image_local }}"
+  when:
+    - flash_image_is_local | bool
+    - not local_image_stat.stat.exists
+  tags:
+    - openwrt
+    - flash
+
+- name: Transfer firmware image to device
+  ansible.builtin.copy:
+    src: "{{ openwrt_flash_image_local }}"
+    dest: "{{ openwrt_flash_device_path }}"
+    mode: '0644'
+  when: flash_image_is_local | bool
+  tags:
+    - openwrt
+    - flash
+
+- name: Check if remote image exists on device
+  ansible.builtin.stat:
+    path: "{{ openwrt_flash_image_path }}"
+  register: remote_image_stat
+  when: not (flash_image_is_local | bool)
+  tags:
+    - openwrt
+    - flash
+
+- name: Fail if remote image does not exist on device
+  ansible.builtin.fail:
+    msg: "Firmware image not found on device: {{ openwrt_flash_image_path }}"
+  when:
+    - not (flash_image_is_local | bool)
+    - not remote_image_stat.stat.exists
+  tags:
+    - openwrt
+    - flash
+
+- name: Set final image path on device
+  ansible.builtin.set_fact:
+    flash_image_device_path: "{{ openwrt_flash_device_path if flash_image_is_local | bool else openwrt_flash_image_path }}"
+  tags:
+    - openwrt
+    - flash
+
+- name: Display flash configuration
+  ansible.builtin.debug:
+    msg: |
+      Flashing firmware to device:
+      - Image: {{ flash_image_device_path }}
+      - Keep settings: {{ openwrt_flash_keep_settings }}
+      - Device will reboot after flashing
+  tags:
+    - openwrt
+    - flash
+
+- name: Flash firmware using sysupgrade
+  ansible.builtin.shell:
+    cmd: |
+      sysupgrade {{ '-k' if openwrt_flash_keep_settings | bool else '' }} {{ flash_image_device_path }}
+  async: 1
+  poll: 0
+  ignore_errors: true
+  register: flash_result
+  tags:
+    - openwrt
+    - flash
+
+- name: Wait for device to reboot (sysupgrade causes immediate reboot)
+  ansible.builtin.pause:
+    seconds: 10
+    prompt: "Device is rebooting. Waiting 10 seconds before checking connectivity..."
+  tags:
+    - openwrt
+    - flash
+
+- name: Wait for device to come back online
+  ansible.builtin.wait_for_connection:
+    connect_timeout: 10
+    delay: 30
+    timeout: 300
+  tags:
+    - openwrt
+    - flash
+
+- name: Display flash completion message
+  ansible.builtin.debug:
+    msg: |
+      Firmware flash completed successfully!
+      - Device has been rebooted
+      - Settings {{ 'preserved' if openwrt_flash_keep_settings | bool else 'reset' }}
+  tags:
+    - openwrt
+    - flash

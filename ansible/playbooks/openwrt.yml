@@ -19,6 +19,10 @@
 #   ansible-playbook playbooks/openwrt.yml --tags clone       # Just clone
 #   ansible-playbook playbooks/openwrt.yml --tags build       # Just build
 #   ansible-playbook playbooks/openwrt.yml --tags artifacts   # Just pull artifacts
+#
+# Note: Flashing is done via the site.yml playbook targeting devices:
+#   ansible-playbook playbooks/site.yml --tags flash --limit gateway \
+#     -e "openwrt_flash_image_local=../artifacts/openwrt/firmware.img.gz"
 
 - name: Complete OpenWrt Build Workflow
   hosts: localhost

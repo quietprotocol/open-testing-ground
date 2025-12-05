@@ -27,3 +27,11 @@ openwrt_diffconfig_path: "{{ openwrt_repo_dir }}boards/common/docker_diffconfig"
 # Local paths for build artifacts
 openwrt_local_artifacts_dir: "{{ playbook_dir }}/../artifacts/openwrt"
 openwrt_local_build_log: "{{ openwrt_local_artifacts_dir }}/build.log"
+
+# Flash configuration
+# Note: If both are empty and artifacts exist, openwrt_flash_image_local will be set automatically
+# from the first firmware image found in {{ openwrt_local_artifacts_dir }}
+openwrt_flash_image_path: ""  # Path to firmware image on device (e.g., /tmp/firmware.img.gz)
+openwrt_flash_image_local: ""  # Local path on Ansible control machine (auto-detected from artifacts if empty)
+openwrt_flash_keep_settings: true  # Preserve settings during flash (sysupgrade -k)
+openwrt_flash_device_path: "/tmp/firmware.img.gz"  # Temporary path on device for transferred firmware image
