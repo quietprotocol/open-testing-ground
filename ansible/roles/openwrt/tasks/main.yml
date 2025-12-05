@@ -1,0 +1,74 @@
+---
+# OpenWrt docker_diffconfig deployment role
+# This role deploys the docker_diffconfig file to the OpenWrt build server
+#
+# Note: This role uses delegate_to to run tasks on the build server.
+# The build server should be configured in the inventory with appropriate
+# connection variables (ansible_user, ansible_ssh_private_key_file, etc.)
+# Alternatively, you can add the build server to the inventory dynamically
+# or configure it via group_vars/all.yml
+
+- name: Ensure docker_diffconfig file exists locally
+  ansible.builtin.stat:
+    path: "{{ role_path }}/files/docker_diffconfig"
+  register: diffconfig_file_stat
+  tags:
+    - openwrt
+
+- name: Fail if docker_diffconfig file is missing
+  ansible.builtin.fail:
+    msg: "docker_diffconfig file not found in role files directory"
+  when: not diffconfig_file_stat.stat.exists
+  tags:
+    - openwrt
+
+- name: Add build server to inventory dynamically
+  ansible.builtin.add_host:
+    name: "{{ openwrt_build_server }}"
+    groups: openwrt_build_servers
+    ansible_user: "{{ openwrt_build_user }}"
+    ansible_ssh_private_key_file: "{{ openwrt_build_ssh_key | expanduser }}"
+  when: openwrt_build_server is defined
+  tags:
+    - openwrt
+
+- name: Ensure target directory exists on build server
+  ansible.builtin.file:
+    path: "{{ openwrt_build_path }}boards/common"
+    state: directory
+    mode: '0755'
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+
+- name: Copy docker_diffconfig to build server
+  ansible.builtin.copy:
+    src: docker_diffconfig
+    dest: "{{ openwrt_diffconfig_path }}"
+    mode: '0644'
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+
+- name: Verify docker_diffconfig deployment
+  ansible.builtin.command:
+    cmd: |
+      ls -lh {{ openwrt_diffconfig_path }}
+      echo ""
+      echo "First 20 lines of docker_diffconfig:"
+      head -20 {{ openwrt_diffconfig_path }}
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  register: diffconfig_verify
+  changed_when: false
+  tags:
+    - openwrt
+
+- name: Display deployment verification
+  ansible.builtin.debug:
+    msg: "{{ diffconfig_verify.stdout_lines }}"
+  tags:
+    - openwrt
+

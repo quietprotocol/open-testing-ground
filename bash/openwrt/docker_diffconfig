@@ -1,0 +1,60 @@
+#
+# Docker Configuration for OpenWrt
+#
+# This diffconfig enables Docker support including:
+# - Docker utilities (docker, docker-compose, dockerd)
+# - Docker network support (macvlan)
+# - Docker storage support (ext3, ext4)
+# - LuCI Docker management interface
+#
+
+# Root filesystem partition size (in MiB)
+# Set to 60GB (61440 MiB) for Docker containers
+# This leaves ~64MB for boot partition and ~3.5GB unallocated on a 64GB SD card
+# Adjust based on your SD card size and needs
+CONFIG_TARGET_ROOTFS_PARTSIZE=61440
+
+#
+# Docker Utilities
+# menuconfig: Utilities
+#
+CONFIG_PACKAGE_docker=y
+CONFIG_PACKAGE_docker-compose=y
+CONFIG_PACKAGE_dockerd=y
+
+#
+# Docker Kernel Support
+# menuconfig: Utilities → dockerd → kernel support
+# These kernel modules are required for Docker to function properly
+#
+# Virtual ethernet pair device (required for Docker networking)
+CONFIG_PACKAGE_kmod-veth=y
+
+# Note: Additional kernel config options (CGROUPS, NAMESPACES, OVERLAY_FS, etc.)
+# are typically enabled by the dockerd package dependencies or may need
+# to be configured in the kernel config for your target platform.
+# OVERLAY_FS is usually built into the kernel (CONFIG_OVERLAY_FS=y) and not a module.
+#
+
+#
+# Docker Network Support
+# menuconfig: Utilities → dockerd → Network
+#
+CONFIG_PACKAGE_kmod-macvlan=y
+
+#
+# Docker Storage Support
+# menuconfig: Utilities → dockerd → Storage
+#
+CONFIG_PACKAGE_kmod-fs-ext3=y
+CONFIG_PACKAGE_kmod-fs-ext4=y
+
+#
+# LuCI Docker Management
+# menuconfig: LuCI → 1. Collections and LuCI → 3. Applications
+#
+# LuCI → 1. Collections: luci-lib-docker
+CONFIG_PACKAGE_luci-lib-docker=y
+
+# LuCI → 3. Applications: luci-app-dockerman
+CONFIG_PACKAGE_luci-app-dockerman=y

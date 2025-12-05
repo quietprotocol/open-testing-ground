@@ -1,0 +1,15 @@
+---
+# Playbook for OpenWrt docker_diffconfig deployment to build server
+# Usage: ansible-playbook playbooks/openwrt.yml
+#
+# Note: This playbook deploys to the build server, not to OpenMANET devices.
+# Configure build server connection in inventory or via variables.
+
+- name: Deploy OpenWrt Docker Diffconfig
+  hosts: localhost
+  gather_facts: no
+  become: no
+  
+  roles:
+    - openwrt
+

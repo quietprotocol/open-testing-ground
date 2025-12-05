@@ -13,17 +13,20 @@ This directory contains Ansible playbooks and roles for deploying OpenMANET gate
 ### Install Ansible
 
 **macOS:**
+
 ```bash
 brew install ansible
 ```
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get update
 sudo apt-get install ansible
 ```
 
 **Python pip:**
+
 ```bash
 pip install ansible
 ```
@@ -54,6 +57,7 @@ all:
 ```
 
 **Security Note:** For production use, consider:
+
 - Using SSH keys instead of passwords
 - Using Ansible Vault to encrypt sensitive data
 - Using `ansible_ssh_private_key_file` in inventory
@@ -67,6 +71,7 @@ ansible-vault create inventory/group_vars/all/vault.yml
 ```
 
 Add your passwords:
+
 ```yaml
 ansible_password: your_password_here
 ```
@@ -118,6 +123,12 @@ Deploy only OpenTAKServer:
 ansible-playbook playbooks/opentakserver.yml
 ```
 
+Deploy only OpenWrt docker_diffconfig to build server:
+
+```bash
+ansible-playbook playbooks/openwrt.yml
+```
+
 ### Deploy to Specific Hosts
 
 Deploy to a specific device:
@@ -148,15 +159,21 @@ ansible-playbook playbooks/site.yml --tags atak
 
 # Only OpenTAKServer-related tasks
 ansible-playbook playbooks/site.yml --tags ots
+
+# Only OpenWrt-related tasks
+ansible-playbook playbooks/site.yml --tags openwrt
 ```
 
 **Available Tags:**
+
 - `docker` - Docker overlay2 storage configuration
 - `gps` - GPS initialization
 - `atak` - TAK Server deployment
 - `ots` - OpenTAKServer deployment
+- `openwrt` - OpenWrt docker_diffconfig deployment to build server
 
 **Examples:**
+
 ```bash
 # Run only Docker role
 ansible-playbook playbooks/site.yml --tags docker
@@ -193,12 +210,19 @@ ansible-playbook playbooks/site.yml -vvv  # Debug mode
 Configures Docker to use the `overlay2` storage driver with optimized settings for OpenWrt.
 
 **Tasks:**
+
 - Deploys `dockerd-overlay2.sh` script
 - Configures Docker daemon via UCI
 - Sets up ext4 loopback filesystem or USB device for Docker storage
 - Updates `/etc/rc.local` for persistent configuration
 
 **Variables** (defined in `roles/docker/defaults/main.yml`):
+
+- `docker_storage_driver`: Storage driver (default: `overlay2`)
+- `docker_data_root`: Docker data directory (default: `/opt/docker`)
+- `docker_image_path`: Path to ext4 image file (default: `/overlay/docker.ext4`)
+- `docker_image_size_gb`: Size of ext4 image in GB (default: `20`)
+- `docker_usb_device`: USB device path (default: `/dev/sda1`)
 - `docker_storage_driver`: Storage driver (default: `overlay2`)
 - `docker_data_root`: Docker data directory (default: `/opt/docker`)
 - `docker_image_path`: Path to ext4 image file (default: `/overlay/docker.ext4`)
@@ -212,11 +236,13 @@ Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 Configures GPS initialization for WM1302 Pi Hat with Quectel L76K GNSS module.
 
 **Tasks:**
+
 - Deploys `gps-init` script
 - Enables GPS init script to run at boot
 - Verifies GPS configuration
 
 **Variables** (defined in `roles/gps/defaults/main.yml`):
+
 - `gps_gpio_rst`: GPIO pin for GPS reset (default: `25`)
 - `gps_gpio_wake`: GPIO pin for GPS wake control (default: `12`)
 - `gps_tty_device`: TTY device for GPS (default: `/dev/ttyAMA0`)
@@ -229,12 +255,14 @@ Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 Deploys TAK Server scripts and configuration files.
 
 **Tasks:**
+
 - Creates TAK Server directory structure
 - Copies setup scripts (`setup.sh`, `certDP.sh`, `shareCerts.sh`)
 - Copies `docker-compose.arm.yml` configuration
 - Verifies deployment
 
 **Variables** (defined in `roles/atak/defaults/main.yml`):
+
 - `tak_server_dir`: TAK Server directory (default: `~/tak-server`)
 - `tak_server_scripts_dir`: Scripts directory (default: `~/tak-server/scripts`)
 
@@ -247,18 +275,42 @@ Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 Deploys OpenTAKServer Docker Compose configuration.
 
 **Tasks:**
+
 - Creates OpenTAKServer directory
 - Backs up existing `compose.yaml` if present
 - Copies `compose.yaml` configuration
 - Verifies deployment
 
 **Variables** (defined in `roles/opentakserver/defaults/main.yml`):
+
 - `opentakserver_dir`: OpenTAKServer directory (default: `~/ots-docker`)
 - `compose_backup`: Whether to backup existing compose.yaml (default: `true`)
 
 Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 **Note:** After deployment, you need to run `make up` or `docker compose up -d` on the device.
+
+### openwrt
+
+Deploys Docker diffconfig file to the OpenWrt build server for custom firmware builds.
+
+**Tasks:**
+
+- Ensures target directory exists on build server
+- Copies `docker_diffconfig` to `boards/common/docker_diffconfig`
+- Verifies deployment
+
+**Variables** (defined in `roles/openwrt/defaults/main.yml`):
+
+- `openwrt_build_server`: Build server hostname or IP (default: from `build_server_host`)
+- `openwrt_build_user`: Build server username (default: from `build_server_user` or `ubuntu`)
+- `openwrt_build_ssh_key`: SSH key path for build server (default: from `build_ssh_key` or `~/.ssh/id_rsa`)
+- `openwrt_build_path`: OpenWrt build repository path (default: from `build_server_path` or `/home/ubuntu/source/openwrt/`)
+- `openwrt_diffconfig_path`: Target path for diffconfig (default: `{{ openwrt_build_path }}boards/common/docker_diffconfig`)
+
+Override these in `group_vars/all.yml` or configure via inventory.
+
+**Note:** This role deploys to the build server (not to OpenMANET devices). The build server should be accessible via SSH. After deployment, the diffconfig can be used in OpenWrt builds by copying it to `.config` or applying it to an existing config.
 
 ## Ad-Hoc Commands
 
@@ -292,6 +344,12 @@ Start OpenTAKServer (after deploying compose.yaml):
 ansible openmanet_devices -m shell -a "cd ~/ots-docker && docker compose up -d"
 ```
 
+Deploy OpenWrt docker_diffconfig to build server:
+
+```bash
+ansible-playbook playbooks/openwrt.yml
+```
+
 ## Troubleshooting
 
 ### Connection Issues
@@ -299,6 +357,7 @@ ansible openmanet_devices -m shell -a "cd ~/ots-docker && docker compose up -d"
 If you have SSH connection issues:
 
 1. Test SSH connectivity manually:
+
    ```bash
    ssh root@192.168.1.1
    ```
@@ -306,6 +365,7 @@ If you have SSH connection issues:
 2. Check inventory file for correct credentials
 
 3. Use verbose mode to see connection details:
+
    ```bash
    ansible-playbook playbooks/site.yml -vvv
    ```
@@ -313,6 +373,7 @@ If you have SSH connection issues:
 ### Permission Issues
 
 Ansible connects as the user specified in inventory (`ansible_user`). Make sure:
+
 - The user has necessary permissions
 - SSH keys are set up correctly if using key-based auth
 - Password authentication is enabled if using passwords
@@ -328,7 +389,7 @@ If a task fails:
 
 ## Directory Structure
 
-```
+```text
 ansible/
 ├── ansible.cfg              # Ansible configuration
 ├── inventory/
@@ -343,7 +404,8 @@ ansible/
 │   ├── docker.yml         # Docker-only playbook
 │   ├── gps.yml            # GPS-only playbook
 │   ├── atak.yml           # TAK Server-only playbook
-│   └── opentakserver.yml  # OpenTAKServer-only playbook
+│   ├── opentakserver.yml  # OpenTAKServer-only playbook
+│   └── openwrt.yml        # OpenWrt diffconfig-only playbook
 └── roles/
     ├── docker/
     │   ├── defaults/
@@ -369,13 +431,20 @@ ansible/
     │       ├── certDP.sh
     │       ├── shareCerts.sh
     │       └── docker-compose.arm.yml
-    └── opentakserver/
+    ├── opentakserver/
+    │   ├── defaults/
+    │   │   └── main.yml   # OpenTAKServer role default variables
+    │   ├── tasks/
+    │   │   └── main.yml
+    │   └── files/
+    │       └── compose.yaml
+    └── openwrt/
         ├── defaults/
-        │   └── main.yml   # OpenTAKServer role default variables
+        │   └── main.yml   # OpenWrt role default variables
         ├── tasks/
         │   └── main.yml
         └── files/
-            └── compose.yaml
+            └── docker_diffconfig
 ```
 
 ## Migration from Bash Scripts
@@ -388,6 +457,7 @@ The Ansible playbooks replace the following bash scripts:
 | `bash/gps/deploy_gps_init.sh` | `ansible-playbook playbooks/gps.yml` |
 | `bash/atak/deploy_scripts.sh` | `ansible-playbook playbooks/atak.yml` |
 | `bash/opentakserver/deploy_compose.sh` | `ansible-playbook playbooks/opentakserver.yml` |
+| `bash/openwrt/deploy_docker_diffconfig.sh` | `ansible-playbook playbooks/openwrt.yml` |
 
 ## Best Practices
 
@@ -403,4 +473,3 @@ The Ansible playbooks replace the following bash scripts:
 - [Ansible Documentation](https://docs.ansible.com/)
 - [Ansible Best Practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
 - [OpenMANET Documentation](https://openmanet.github.io/docs/)
-

@@ -1,0 +1,12 @@
+---
+# Default variables for openwrt role
+
+# Build server connection details
+openwrt_build_server: "{{ build_server_host | default('localhost') }}"
+openwrt_build_user: "{{ build_server_user | default('ubuntu') }}"
+openwrt_build_ssh_key: "{{ build_ssh_key | default('~/.ssh/id_rsa') }}"
+openwrt_build_path: "{{ build_server_path | default('/home/ubuntu/source/openwrt/') }}"
+
+# Target path for docker_diffconfig on build server
+openwrt_diffconfig_path: "{{ openwrt_build_path }}boards/common/docker_diffconfig"
+

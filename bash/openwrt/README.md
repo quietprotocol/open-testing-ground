@@ -152,6 +152,12 @@ Navigate to **Utilities** and enable:
 - **docker-compose** - Docker Compose orchestration tool
 - **dockerd** - Docker daemon
 
+### Docker Kernel Support
+
+Under **Utilities → dockerd**, enable:
+
+- **kernel support** - Enable optional kernel support for docker
+
 ### Docker Network Support
 
 Under **Utilities → dockerd → Network**, enable:
