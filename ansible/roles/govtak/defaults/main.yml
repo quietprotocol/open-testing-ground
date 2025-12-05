@@ -3,4 +3,8 @@
 
 tak_server_dir: ~/tak-server
 tak_server_scripts_dir: "{{ tak_server_dir }}/scripts"
+tak_server_repo_url: "https://github.com/Cloud-RF/tak-server.git"
+tak_server_zip_path: "~/Downloads/takserver-docker-5.6-RELEASE-2.zip"  # PATH: Local path on Ansible control machine (where file is on your computer)
+tak_server_zip_name: ""  # NAME: Filename on device (optional - auto-detected from tak_server_zip_path basename if not set)
+tak_server_run_setup: false  # Set to true to automatically run setup.sh after deployment
 

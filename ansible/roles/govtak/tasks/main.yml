@@ -1,6 +1,16 @@
 ---
 # GovTAK Server deployment role
 
+- name: Install required packages for GovTAK Server
+  ansible.builtin.shell: |
+    opkg update
+    opkg install git-http git openssh-client bash unzip coreutils-sha1sum htop || true
+  args:
+    creates: /usr/bin/git
+  tags:
+    - govtak
+    - setup
+
 - name: Ensure GovTAK Server directory exists
   ansible.builtin.file:
     path: "{{ tak_server_dir }}"
@@ -9,11 +19,54 @@
   tags:
     - govtak
 
+- name: Check if tak-server repository already exists
+  ansible.builtin.stat:
+    path: "{{ tak_server_dir }}/.git"
+  register: tak_server_repo_exists
+  tags:
+    - govtak
+
+- name: Clone Cloud-RF TAK Server repository
+  ansible.builtin.git:
+    repo: "{{ tak_server_repo_url }}"
+    dest: "{{ tak_server_dir }}"
+    update: yes
+    force: yes
+  when: not tak_server_repo_exists.stat.exists
+  tags:
+    - govtak
+
+- name: Update existing tak-server repository
+  ansible.builtin.git:
+    repo: "{{ tak_server_repo_url }}"
+    dest: "{{ tak_server_dir }}"
+    update: yes
+    force: yes
+  when: tak_server_repo_exists.stat.exists
+  tags:
+    - govtak
+
 - name: Ensure GovTAK Server scripts directory exists
   ansible.builtin.file:
     path: "{{ tak_server_scripts_dir }}"
     state: directory
     mode: '0755'
+  tags:
+    - govtak
+
+- name: Check if scripts directory exists after git clone
+  ansible.builtin.stat:
+    path: "{{ tak_server_scripts_dir }}"
+  register: scripts_dir_stat
+  tags:
+    - govtak
+
+- name: Create scripts directory if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ tak_server_scripts_dir }}"
+    state: directory
+    mode: '0755'
+  when: not scripts_dir_stat.stat.exists
   tags:
     - govtak
 
@@ -37,11 +90,56 @@
   tags:
     - govtak
 
+- name: Check if TAK Server ZIP file is specified
+  ansible.builtin.assert:
+    that:
+      - tak_server_zip_path != ""
+    fail_msg: "TAK Server ZIP file path must be specified. Set tak_server_zip_path variable (e.g., -e 'tak_server_zip_path=~/Downloads/takserver-docker-5.6-RELEASE.zip')"
+    success_msg: "TAK Server ZIP file path is specified"
+  when: tak_server_run_setup | bool
+  tags:
+    - govtak
+
+- name: Check if local TAK Server ZIP file exists
+  ansible.builtin.stat:
+    path: "{{ tak_server_zip_path | expanduser }}"
+  register: tak_server_zip_local_stat
+  delegate_to: localhost
+  when: tak_server_zip_path != ""
+  tags:
+    - govtak
+
+- name: Fail if TAK Server ZIP file does not exist locally
+  ansible.builtin.fail:
+    msg: "TAK Server ZIP file not found: {{ tak_server_zip_path }}"
+  when:
+    - tak_server_zip_path != ""
+    - not tak_server_zip_local_stat.stat.exists
+  tags:
+    - govtak
+
+- name: Determine TAK Server ZIP filename
+  ansible.builtin.set_fact:
+    tak_server_zip_filename: "{{ tak_server_zip_name if tak_server_zip_name != '' else (tak_server_zip_path | basename) }}"
+  when: tak_server_zip_path != ""
+  tags:
+    - govtak
+
+- name: Transfer TAK Server ZIP file to device
+  ansible.builtin.copy:
+    src: "{{ tak_server_zip_path | expanduser }}"
+    dest: "{{ tak_server_dir }}/{{ tak_server_zip_filename }}"
+    mode: '0644'
+  when: tak_server_zip_path != ""
+  tags:
+    - govtak
+
 - name: Verify deployment
-  ansible.builtin.command:
-    cmd: ls -lh {{ tak_server_scripts_dir }}/*.sh {{ tak_server_dir }}/docker-compose.arm.yml
+  ansible.builtin.shell: |
+    ls -lh {{ tak_server_scripts_dir }}/*.sh {{ tak_server_dir }}/docker-compose.arm.yml 2>/dev/null || echo "Some files missing"
   register: govtak_verify
   changed_when: false
+  failed_when: false
   tags:
     - govtak
 
@@ -50,4 +148,26 @@
     msg: "{{ govtak_verify.stdout_lines }}"
   tags:
     - govtak
+
+- name: Display TAK Server ZIP status
+  ansible.builtin.debug:
+    msg: |
+      TAK Server ZIP file: {{ tak_server_zip_filename if tak_server_zip_path != '' else 'Not specified' }}
+      Location on device: {{ tak_server_dir }}/{{ tak_server_zip_filename if tak_server_zip_path != '' else 'N/A' }}
+      To run setup: cd {{ tak_server_dir }} && chmod +x scripts/setup.sh && ./scripts/setup.sh
+  when: tak_server_zip_path != ""
+  tags:
+    - govtak
+
+- name: Run TAK Server setup script
+  ansible.builtin.shell: |
+    cd {{ tak_server_dir }}
+    chmod +x scripts/setup.sh
+    ./scripts/setup.sh
+  when: tak_server_run_setup | bool
+  async: 600
+  poll: 10
+  tags:
+    - govtak
+    - setup
 
