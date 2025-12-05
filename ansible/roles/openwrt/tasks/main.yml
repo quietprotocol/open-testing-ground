@@ -229,13 +229,11 @@
 # ============================================================================
 
 - name: Download all required source packages
-  ansible.builtin.command:
+  ansible.builtin.shell:
     cmd: make download
     chdir: "{{ openwrt_repo_dir }}"
   delegate_to: "{{ openwrt_build_server }}"
   become: false
-  async: 3600
-  poll: 30
   tags:
     - openwrt
     - download
