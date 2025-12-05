@@ -1,14 +1,31 @@
 ---
-# Playbook for OpenWrt docker_diffconfig deployment to build server
+# Playbook for Complete OpenWrt Build Workflow
 # Usage: ansible-playbook playbooks/openwrt.yml
 #
-# Note: This playbook deploys to the build server, not to OpenMANET devices.
+# This playbook performs a complete OpenWrt firmware build:
+# 1. Clones OpenMANET/openwrt repository
+# 2. Checks out specified branch
+# 3. Initializes build environment with morse_setup.sh
+# 4. Applies docker_diffconfig for Docker support
+# 5. Downloads all required sources
+# 6. Builds the firmware image
+# 7. Pulls build artifacts back to local machine
+#
+# Note: This playbook runs on the build server (not on OpenMANET devices).
 # Configure build server connection in inventory or via variables.
+#
+# Examples:
+#   ansible-playbook playbooks/openwrt.yml                    # Full build
+#   ansible-playbook playbooks/openwrt.yml --tags clone       # Just clone
+#   ansible-playbook playbooks/openwrt.yml --tags build       # Just build
+#   ansible-playbook playbooks/openwrt.yml --tags artifacts   # Just pull artifacts
 
-- name: Deploy OpenWrt Docker Diffconfig
+- name: Complete OpenWrt Build Workflow
   hosts: localhost
-  gather_facts: no
+  gather_facts: yes
   become: no
+  vars_files:
+    - ../group_vars/all.yml
   
   roles:
     - openwrt

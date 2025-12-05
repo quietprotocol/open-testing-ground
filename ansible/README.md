@@ -1,268 +1,132 @@
 # OpenMANET Ansible Deployment
 
-This directory contains Ansible playbooks and roles for deploying OpenMANET gateway configurations across multiple devices.
+This directory contains Ansible playbooks and roles for deploying and managing OpenMANET gateway configurations.
 
-## Prerequisites
+## Overview
 
-- Ansible 2.9 or later
-- SSH access to your OpenWrt devices
-- Python on the control machine (for Ansible)
+The Ansible setup provides:
+- **Idempotent deployments** - Safe to run multiple times
+- **Multi-device management** - Manage multiple devices from a single inventory
+- **Modular roles** - Each component is a separate, reusable role
+- **Better error handling** - Clear error messages and rollback capabilities
+- **Dry-run capability** - Test changes with `--check` before applying
 
-## Installation
+## Quick Start
 
-### Install Ansible
+1. **Copy and configure inventory:**
+   ```bash
+   cp inventory/hosts.example.yml inventory/hosts.yml
+   # Edit inventory/hosts.yml with your device information
+   ```
 
-**macOS:**
+2. **Run the main playbook:**
+   ```bash
+   ansible-playbook playbooks/site.yml
+   ```
 
-```bash
-brew install ansible
+3. **Run specific roles:**
+   ```bash
+   ansible-playbook playbooks/site.yml --tags docker
+   ansible-playbook playbooks/site.yml --tags gps
+   ansible-playbook playbooks/site.yml --tags atak
+   ```
+
+## Directory Structure
+
+```
+ansible/
+├── ansible.cfg              # Ansible configuration
+├── group_vars/              # Group variables
+│   └── all.yml              # Global variables
+├── inventory/               # Inventory files
+│   ├── hosts.example.yml    # Example inventory
+│   └── hosts.yml            # Your inventory (gitignored)
+├── playbooks/               # Playbooks
+│   ├── site.yml             # Main playbook
+│   ├── atak.yml             # TAK Server deployment
+│   ├── docker.yml           # Docker configuration
+│   ├── gps.yml              # GPS setup
+│   ├── opentakserver.yml    # OpenTAKServer deployment
+│   └── openwrt.yml          # OpenWrt firmware build
+└── roles/                   # Ansible roles
+    ├── atak/                # TAK Server role
+    ├── docker/               # Docker role
+    ├── gps/                 # GPS role
+    ├── opentakserver/       # OpenTAKServer role
+    └── openwrt/             # OpenWrt build role
 ```
 
-**Linux (Ubuntu/Debian):**
+## Inventory Configuration
 
-```bash
-sudo apt-get update
-sudo apt-get install ansible
-```
-
-**Python pip:**
-
-```bash
-pip install ansible
-```
-
-## Configuration
-
-### 1. Inventory Setup
-
-Copy the example inventory file and update it with your device information:
-
-```bash
-cp inventory/hosts.example.yml inventory/hosts.yml
-```
-
-Edit `inventory/hosts.yml` with your device details:
+Edit `inventory/hosts.yml` to configure your devices:
 
 ```yaml
 all:
   children:
     openmanet_devices:
       hosts:
-        gateway1:
+        gateway:
           ansible_host: 192.168.1.1
           ansible_user: root
-          ansible_password: your_password_here
-          # Or use SSH key:
-          # ansible_ssh_private_key_file: ~/.ssh/id_rsa
-```
-
-**Security Note:** For production use, consider:
-
-- Using SSH keys instead of passwords
-- Using Ansible Vault to encrypt sensitive data
-- Using `ansible_ssh_private_key_file` in inventory
-
-### 2. Using Ansible Vault (Recommended)
-
-Create an encrypted vault file for passwords:
-
-```bash
-ansible-vault create inventory/group_vars/all/vault.yml
-```
-
-Add your passwords:
-
-```yaml
-ansible_password: your_password_here
-```
-
-Then reference it in your inventory or group_vars.
-
-### 3. Variable Customization
-
-Variables are defined in each role's `defaults/main.yml` file. To customize values:
-
-- **For all devices**: Override in `group_vars/all.yml` or `host_vars/<hostname>.yml`
-- **For specific devices**: Create `host_vars/<hostname>.yml` with device-specific values
-
-Each role's default variables are documented in the Roles section below.
-
-## Usage
-
-### Deploy Everything
-
-Deploy all configurations to all devices:
-
-```bash
-ansible-playbook playbooks/site.yml
-```
-
-### Deploy Specific Components
-
-Deploy only Docker storage configuration:
-
-```bash
-ansible-playbook playbooks/docker.yml
-```
-
-Deploy only GPS initialization:
-
-```bash
-ansible-playbook playbooks/gps.yml
-```
-
-Deploy only TAK Server:
-
-```bash
-ansible-playbook playbooks/atak.yml
-```
-
-Deploy only OpenTAKServer:
-
-```bash
-ansible-playbook playbooks/opentakserver.yml
-```
-
-Deploy only OpenWrt docker_diffconfig to build server:
-
-```bash
-ansible-playbook playbooks/openwrt.yml
-```
-
-### Deploy to Specific Hosts
-
-Deploy to a specific device:
-
-```bash
-ansible-playbook playbooks/site.yml --limit gateway1
-```
-
-Deploy to multiple specific devices:
-
-```bash
-ansible-playbook playbooks/site.yml --limit gateway1,gateway2
-```
-
-### Using Tags
-
-Deploy only specific roles using tags:
-
-```bash
-# Only Docker-related tasks
-ansible-playbook playbooks/site.yml --tags docker
-
-# Only GPS-related tasks
-ansible-playbook playbooks/site.yml --tags gps
-
-# Only TAK Server-related tasks
-ansible-playbook playbooks/site.yml --tags atak
-
-# Only OpenTAKServer-related tasks
-ansible-playbook playbooks/site.yml --tags ots
-
-# Only OpenWrt-related tasks
-ansible-playbook playbooks/site.yml --tags openwrt
-```
-
-**Available Tags:**
-
-- `docker` - Docker overlay2 storage configuration
-- `gps` - GPS initialization
-- `atak` - TAK Server deployment
-- `ots` - OpenTAKServer deployment
-- `openwrt` - OpenWrt docker_diffconfig deployment to build server
-
-**Examples:**
-
-```bash
-# Run only Docker role
-ansible-playbook playbooks/site.yml --tags docker
-
-# Run multiple roles
-ansible-playbook playbooks/site.yml --tags docker,gps
-
-# Skip a specific role
-ansible-playbook playbooks/site.yml --skip-tags atak
-```
-
-### Check Mode (Dry Run)
-
-Test changes without applying them:
-
-```bash
-ansible-playbook playbooks/site.yml --check
-```
-
-### Verbose Output
-
-Get more detailed output:
-
-```bash
-ansible-playbook playbooks/site.yml -v    # Verbose
-ansible-playbook playbooks/site.yml -vv   # More verbose
-ansible-playbook playbooks/site.yml -vvv  # Debug mode
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+        mesh_point:
+          ansible_host: 192.168.1.2
+          ansible_user: root
+          ansible_password: your_password
 ```
 
 ## Roles
 
 ### docker
 
-Configures Docker to use the `overlay2` storage driver with optimized settings for OpenWrt.
+Configures Docker storage driver and data directory on OpenWrt devices.
 
 **Tasks:**
-
-- Deploys `dockerd-overlay2.sh` script
-- Configures Docker daemon via UCI
-- Sets up ext4 loopback filesystem or USB device for Docker storage
-- Updates `/etc/rc.local` for persistent configuration
+- Configures Docker to use overlay2 storage driver
+- Sets up Docker data directory on USB storage or overlay
+- Creates Docker storage image file
+- Configures Docker daemon
 
 **Variables** (defined in `roles/docker/defaults/main.yml`):
-
 - `docker_storage_driver`: Storage driver (default: `overlay2`)
 - `docker_data_root`: Docker data directory (default: `/opt/docker`)
-- `docker_image_path`: Path to ext4 image file (default: `/overlay/docker.ext4`)
-- `docker_image_size_gb`: Size of ext4 image in GB (default: `20`)
-- `docker_usb_device`: USB device path (default: `/dev/sda1`)
-- `docker_storage_driver`: Storage driver (default: `overlay2`)
-- `docker_data_root`: Docker data directory (default: `/opt/docker`)
-- `docker_image_path`: Path to ext4 image file (default: `/overlay/docker.ext4`)
-- `docker_image_size_gb`: Size of ext4 image in GB (default: `20`)
-- `docker_usb_device`: USB device path (default: `/dev/sda1`)
+- `docker_image_path`: Path to Docker storage image (default: `/overlay/docker.ext4`)
+- `docker_image_size_gb`: Size of Docker storage image in GB (default: `20`)
+- `docker_usb_device`: USB device for Docker storage (default: `/dev/sda1`)
 
 Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
+
+**Note:** After deployment, restart Docker: `ansible openmanet_devices -m shell -a "/etc/init.d/dockerd restart"`
 
 ### gps
 
 Configures GPS initialization for WM1302 Pi Hat with Quectel L76K GNSS module.
 
 **Tasks:**
-
-- Deploys `gps-init` script
-- Enables GPS init script to run at boot
-- Verifies GPS configuration
+- Deploys GPS initialization script
+- Configures GPS to run on boot via `/etc/rc.local`
+- Sets up GPIO pins for GPS reset and wake control
 
 **Variables** (defined in `roles/gps/defaults/main.yml`):
-
-- `gps_gpio_rst`: GPIO pin for GPS reset (default: `25`)
-- `gps_gpio_wake`: GPIO pin for GPS wake control (default: `12`)
-- `gps_tty_device`: TTY device for GPS (default: `/dev/ttyAMA0`)
-- `gps_baud`: Baud rate (default: `9600`)
+- `gps_serial_port`: GPS serial port (default: `/dev/ttyAMA0`)
+- `gps_reset_gpio`: GPIO pin for GPS reset (default: `25`)
+- `gps_wake_gpio`: GPIO pin for GPS wake (default: `24`)
 
 Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
+**Note:** GPS setup requires WM1302 Pi Hat hardware. The GPS will start automatically on boot.
+
 ### atak
 
-Deploys TAK Server scripts and configuration files.
+Deploys TAK Server installation scripts and Docker Compose configuration.
 
 **Tasks:**
-
 - Creates TAK Server directory structure
 - Copies setup scripts (`setup.sh`, `certDP.sh`, `shareCerts.sh`)
 - Copies `docker-compose.arm.yml` configuration
 - Verifies deployment
 
 **Variables** (defined in `roles/atak/defaults/main.yml`):
-
 - `tak_server_dir`: TAK Server directory (default: `~/tak-server`)
 - `tak_server_scripts_dir`: Scripts directory (default: `~/tak-server/scripts`)
 
@@ -275,14 +139,12 @@ Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 Deploys OpenTAKServer Docker Compose configuration.
 
 **Tasks:**
-
 - Creates OpenTAKServer directory
 - Backs up existing `compose.yaml` if present
 - Copies `compose.yaml` configuration
 - Verifies deployment
 
 **Variables** (defined in `roles/opentakserver/defaults/main.yml`):
-
 - `opentakserver_dir`: OpenTAKServer directory (default: `~/ots-docker`)
 - `compose_backup`: Whether to backup existing compose.yaml (default: `true`)
 
@@ -292,25 +154,84 @@ Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 ### openwrt
 
-Deploys Docker diffconfig file to the OpenWrt build server for custom firmware builds.
+Complete OpenWrt firmware build workflow. This role handles the entire build process from cloning the repository to pulling build artifacts back to your local machine.
 
-**Tasks:**
+**Important:** All build tasks run on a **REMOTE build server** via SSH. The playbook executes locally but delegates all build operations to the remote server.
 
-- Ensures target directory exists on build server
-- Copies `docker_diffconfig` to `boards/common/docker_diffconfig`
-- Verifies deployment
+**Complete Workflow:**
+
+1. **Clone Repository**: Clones [OpenMANET/openwrt](https://github.com/OpenMANET/openwrt) repository on remote build server
+2. **Checkout Branch**: Checks out specified branch (default: `release-1.5`)
+3. **Initialize Build**: Runs `morse_setup.sh` to initialize build environment
+4. **Apply Docker Config**: Applies `docker_diffconfig` to enable Docker support
+5. **Download Sources**: Downloads all required source packages
+6. **Build Firmware**: Compiles the firmware image with Docker support (uses 16 cores by default)
+7. **Pull Artifacts**: Downloads build artifacts (images, logs, packages) from remote server to local machine
+
+**Usage:**
+
+```bash
+# Full build workflow
+ansible-playbook playbooks/openwrt.yml
+
+# Run specific steps using tags
+ansible-playbook playbooks/openwrt.yml --tags clone      # Just clone repo
+ansible-playbook playbooks/openwrt.yml --tags setup       # Setup and morse
+ansible-playbook playbooks/openwrt.yml --tags diffconfig  # Apply docker config
+ansible-playbook playbooks/openwrt.yml --tags download    # Download sources
+ansible-playbook playbooks/openwrt.yml --tags build       # Build firmware
+ansible-playbook playbooks/openwrt.yml --tags artifacts   # Pull artifacts
+```
 
 **Variables** (defined in `roles/openwrt/defaults/main.yml`):
 
+**Build Server Connection (REMOTE):**
 - `openwrt_build_server`: Build server hostname or IP (default: from `build_server_host`)
-- `openwrt_build_user`: Build server username (default: from `build_server_user` or `ubuntu`)
-- `openwrt_build_ssh_key`: SSH key path for build server (default: from `build_ssh_key` or `~/.ssh/id_rsa`)
-- `openwrt_build_path`: OpenWrt build repository path (default: from `build_server_path` or `/home/ubuntu/source/openwrt/`)
-- `openwrt_diffconfig_path`: Target path for diffconfig (default: `{{ openwrt_build_path }}boards/common/docker_diffconfig`)
+- `openwrt_build_user`: Build server username (default: `ubuntu`)
+- `openwrt_build_ssh_key`: SSH key path (default: `~/.ssh/id_rsa_proxmox_vms`)
+- `openwrt_build_path`: OpenWrt repository path on remote server (default: `/home/ubuntu/source/openwrt/`)
 
-Override these in `group_vars/all.yml` or configure via inventory.
+**Repository Configuration:**
+- `openwrt_repo_url`: Repository URL (default: `https://github.com/OpenMANET/openwrt.git`)
+- `openwrt_repo_branch`: Branch to checkout (default: `release-1.5`)
+- `openwrt_build_config`: Morse setup config identifier (default: `ekh01`)
 
-**Note:** This role deploys to the build server (not to OpenMANET devices). The build server should be accessible via SSH. After deployment, the diffconfig can be used in OpenWrt builds by copying it to `.config` or applying it to an existing config.
+**Build Configuration:**
+- `openwrt_build_jobs`: Parallel build jobs (default: `16` cores)
+- `openwrt_build_verbose`: Verbose level (default: `sc`)
+
+**Local Artifacts:**
+- `openwrt_local_artifacts_dir`: Local directory for build artifacts (default: `../artifacts/openwrt`)
+- `openwrt_local_build_log`: Local path for build log (default: `{{ openwrt_local_artifacts_dir }}/build.log`)
+
+**Example Configuration** (in `group_vars/all.yml`):
+
+```yaml
+# Build server connection
+build_server_host: openmanet.marmal.duckdns.org
+build_server_user: ubuntu
+build_ssh_key: ~/.ssh/id_rsa_proxmox_vms
+
+# OpenWrt build configuration
+openwrt_repo_branch: release-1.5
+openwrt_build_config: ekh01
+openwrt_build_jobs: 16  # Adjust based on CPU cores
+```
+
+**Build Artifacts:**
+
+After a successful build, artifacts are downloaded to:
+- `artifacts/openwrt/build.log` - Build log file
+- `artifacts/openwrt/*.img.gz` - Firmware images
+- `artifacts/openwrt/packages/` - Built packages directory
+
+**Note:** 
+- All build operations run on the **REMOTE build server** via SSH delegation
+- The build server must be accessible via SSH from your local machine
+- The build server should have sufficient disk space (20GB+ recommended) and CPU cores
+- **Build time**: The build step typically takes **15+ minutes** (can vary based on hardware and selected packages)
+- Build progress is checked every 30 seconds - the playbook will wait for completion
+- Build artifacts are automatically downloaded to your local machine after completion
 
 ## Ad-Hoc Commands
 
@@ -338,138 +259,76 @@ Run TAK Server setup (after deploying scripts):
 ansible openmanet_devices -m shell -a "cd ~/tak-server && ./scripts/setup.sh"
 ```
 
-Start OpenTAKServer (after deploying compose.yaml):
+Check OpenTAKServer status:
 
 ```bash
-ansible openmanet_devices -m shell -a "cd ~/ots-docker && docker compose up -d"
+ansible openmanet_devices -m shell -a "cd ~/ots-docker && docker compose ps"
 ```
 
-Deploy OpenWrt docker_diffconfig to build server:
+## Best Practices
 
-```bash
-ansible-playbook playbooks/openwrt.yml
-```
+1. **Use tags** to run specific roles or tasks:
+   ```bash
+   ansible-playbook playbooks/site.yml --tags docker
+   ```
+
+2. **Test with --check** before applying changes:
+   ```bash
+   ansible-playbook playbooks/site.yml --check
+   ```
+
+3. **Use --limit** to target specific devices:
+   ```bash
+   ansible-playbook playbooks/site.yml --limit gateway
+   ```
+
+4. **Review changes** with --diff:
+   ```bash
+   ansible-playbook playbooks/site.yml --diff
+   ```
+
+5. **Use vault** for sensitive data:
+   ```bash
+   ansible-vault encrypt group_vars/all.yml
+   ```
 
 ## Troubleshooting
 
 ### Connection Issues
 
-If you have SSH connection issues:
+If you can't connect to devices:
 
-1. Test SSH connectivity manually:
+```bash
+# Test SSH connectivity
+ansible openmanet_devices -m ping
 
-   ```bash
-   ssh root@192.168.1.1
-   ```
+# Check SSH key permissions
+chmod 600 ~/.ssh/id_rsa
 
-2. Check inventory file for correct credentials
-
-3. Use verbose mode to see connection details:
-
-   ```bash
-   ansible-playbook playbooks/site.yml -vvv
-   ```
+# Test with verbose output
+ansible-playbook playbooks/site.yml -vvv
+```
 
 ### Permission Issues
 
-Ansible connects as the user specified in inventory (`ansible_user`). Make sure:
+If tasks fail with permission errors:
 
-- The user has necessary permissions
-- SSH keys are set up correctly if using key-based auth
-- Password authentication is enabled if using passwords
+```bash
+# Ensure you're using the correct user
+ansible openmanet_devices -m shell -a "whoami"
 
-### Task Failures
-
-If a task fails:
-
-1. Check the error message in the output
-2. Run the playbook with `-vvv` for detailed debugging
-3. Test the command manually on the device
-4. Check that required files exist in role `files/` directories
-
-## Directory Structure
-
-```text
-ansible/
-├── ansible.cfg              # Ansible configuration
-├── inventory/
-│   ├── hosts.yml           # Inventory file (create from example)
-│   └── hosts.example.yml   # Example inventory
-├── group_vars/
-│   └── all.yml             # Global variables (optional overrides)
-├── host_vars/              # Host-specific variables (optional)
-│   └── gateway1.yml       # Example host-specific vars
-├── playbooks/
-│   ├── site.yml           # Main playbook (deploys everything)
-│   ├── docker.yml         # Docker-only playbook
-│   ├── gps.yml            # GPS-only playbook
-│   ├── atak.yml           # TAK Server-only playbook
-│   ├── opentakserver.yml  # OpenTAKServer-only playbook
-│   └── openwrt.yml        # OpenWrt diffconfig-only playbook
-└── roles/
-    ├── docker/
-    │   ├── defaults/
-    │   │   └── main.yml   # Docker role default variables
-    │   ├── tasks/
-    │   │   └── main.yml
-    │   └── files/
-    │       └── dockerd-overlay2.sh
-    ├── gps/
-    │   ├── defaults/
-    │   │   └── main.yml   # GPS role default variables
-    │   ├── tasks/
-    │   │   └── main.yml
-    │   └── templates/
-    │       └── gps-init.j2
-    ├── atak/
-    │   ├── defaults/
-    │   │   └── main.yml   # ATAK role default variables
-    │   ├── tasks/
-    │   │   └── main.yml
-    │   └── files/
-    │       ├── setup.sh
-    │       ├── certDP.sh
-    │       ├── shareCerts.sh
-    │       └── docker-compose.arm.yml
-    ├── opentakserver/
-    │   ├── defaults/
-    │   │   └── main.yml   # OpenTAKServer role default variables
-    │   ├── tasks/
-    │   │   └── main.yml
-    │   └── files/
-    │       └── compose.yaml
-    └── openwrt/
-        ├── defaults/
-        │   └── main.yml   # OpenWrt role default variables
-        ├── tasks/
-        │   └── main.yml
-        └── files/
-            └── docker_diffconfig
+# Check sudo access (if needed)
+ansible openmanet_devices -m shell -a "sudo whoami" --become
 ```
 
-## Migration from Bash Scripts
+### Role-Specific Issues
 
-The Ansible playbooks replace the following bash scripts:
-
-| Bash Script | Ansible Equivalent |
-|------------|-------------------|
-| `bash/docker/deploy_dockerd_overlay2.sh` | `ansible-playbook playbooks/docker.yml` |
-| `bash/gps/deploy_gps_init.sh` | `ansible-playbook playbooks/gps.yml` |
-| `bash/atak/deploy_scripts.sh` | `ansible-playbook playbooks/atak.yml` |
-| `bash/opentakserver/deploy_compose.sh` | `ansible-playbook playbooks/opentakserver.yml` |
-| `bash/openwrt/deploy_docker_diffconfig.sh` | `ansible-playbook playbooks/openwrt.yml` |
-
-## Best Practices
-
-1. **Use SSH Keys**: Instead of passwords, use SSH key authentication
-2. **Use Ansible Vault**: Encrypt sensitive data with `ansible-vault`
-3. **Test First**: Use `--check` mode before applying changes
-4. **Version Control**: Keep inventory files in version control (excluding secrets)
-5. **Idempotency**: All tasks are designed to be idempotent (safe to run multiple times)
-6. **Backup**: Always backup before major changes
+- **Docker**: Check Docker daemon is running: `ansible openmanet_devices -m shell -a "/etc/init.d/dockerd status"`
+- **GPS**: Check serial port: `ansible openmanet_devices -m shell -a "ls -la /dev/ttyAMA0"`
+- **OpenWrt Build**: Check build log: `tail -100 artifacts/openwrt/build.log`
 
 ## References
 
 - [Ansible Documentation](https://docs.ansible.com/)
-- [Ansible Best Practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
+- [OpenMANET OpenWrt Repository](https://github.com/OpenMANET/openwrt)
 - [OpenMANET Documentation](https://openmanet.github.io/docs/)

@@ -1,12 +1,29 @@
 ---
 # Default variables for openwrt role
+#
+# Note: This role builds firmware on a REMOTE build server.
+# All build tasks are delegated to the build server via SSH.
+# Configure build server connection in group_vars/all.yml or inventory.
 
-# Build server connection details
+# Build server connection details (REMOTE server)
 openwrt_build_server: "{{ build_server_host | default('localhost') }}"
 openwrt_build_user: "{{ build_server_user | default('ubuntu') }}"
-openwrt_build_ssh_key: "{{ build_ssh_key | default('~/.ssh/id_rsa') }}"
+openwrt_build_ssh_key: "{{ build_ssh_key | default('~/.ssh/id_rsa_proxmox_vms') }}"
 openwrt_build_path: "{{ build_server_path | default('/home/ubuntu/source/openwrt/') }}"
 
-# Target path for docker_diffconfig on build server
-openwrt_diffconfig_path: "{{ openwrt_build_path }}boards/common/docker_diffconfig"
+# Repository configuration
+openwrt_repo_url: "https://github.com/OpenMANET/openwrt.git"
+openwrt_repo_branch: "release-1.5"  # Can be overridden: release-1.5, release-1.4.1, mm/v23.05.5, etc.
+openwrt_repo_dir: "{{ openwrt_build_path }}"
 
+# Build configuration
+openwrt_build_config: "ekh01"  # Morse setup build config identifier
+openwrt_build_jobs: "16"  # Number of parallel build jobs (-jN) - default 16 cores
+openwrt_build_verbose: "sc"  # Verbose level: sc, 1, 0
+
+# Target path for docker_diffconfig on build server
+openwrt_diffconfig_path: "{{ openwrt_repo_dir }}boards/common/docker_diffconfig"
+
+# Local paths for build artifacts
+openwrt_local_artifacts_dir: "{{ playbook_dir }}/../artifacts/openwrt"
+openwrt_local_build_log: "{{ openwrt_local_artifacts_dir }}/build.log"

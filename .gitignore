@@ -16,3 +16,8 @@ Thumbs.db
 *.swo
 *~
 
+# Build artifacts
+artifacts/
+*.img.gz
+*.log
+

@@ -1,12 +1,23 @@
 ---
-# OpenWrt docker_diffconfig deployment role
-# This role deploys the docker_diffconfig file to the OpenWrt build server
+# OpenWrt Complete Build Role
+# This role handles the complete OpenWrt build process:
+# 1. Clone OpenMANET/openwrt repository
+# 2. Checkout specified branch
+# 3. Run morse_setup.sh to initialize build environment
+# 4. Apply docker_diffconfig
+# 5. Download sources
+# 6. Build the firmware image
+# 7. Pull build artifacts back to local machine
 #
-# Note: This role uses delegate_to to run tasks on the build server.
-# The build server should be configured in the inventory with appropriate
-# connection variables (ansible_user, ansible_ssh_private_key_file, etc.)
-# Alternatively, you can add the build server to the inventory dynamically
-# or configure it via group_vars/all.yml
+# Usage:
+#   ansible-playbook playbooks/openwrt.yml                    # Full build
+#   ansible-playbook playbooks/openwrt.yml --tags clone      # Just clone
+#   ansible-playbook playbooks/openwrt.yml --tags build      # Just build
+#   ansible-playbook playbooks/openwrt.yml --tags artifacts   # Just pull artifacts
+
+# ============================================================================
+# Setup and Validation
+# ============================================================================
 
 - name: Ensure docker_diffconfig file exists locally
   ansible.builtin.stat:
@@ -14,6 +25,7 @@
   register: diffconfig_file_stat
   tags:
     - openwrt
+    - setup
 
 - name: Fail if docker_diffconfig file is missing
   ansible.builtin.fail:
@@ -21,6 +33,7 @@
   when: not diffconfig_file_stat.stat.exists
   tags:
     - openwrt
+    - setup
 
 - name: Add build server to inventory dynamically
   ansible.builtin.add_host:
@@ -28,19 +41,146 @@
     groups: openwrt_build_servers
     ansible_user: "{{ openwrt_build_user }}"
     ansible_ssh_private_key_file: "{{ openwrt_build_ssh_key | expanduser }}"
-  when: openwrt_build_server is defined
+    ansible_host: "{{ openwrt_build_server }}"
+  when: openwrt_build_server != 'localhost'
   tags:
     - openwrt
+    - setup
 
-- name: Ensure target directory exists on build server
+- name: Ensure source directory exists on build server
   ansible.builtin.file:
-    path: "{{ openwrt_build_path }}boards/common"
+    path: "{{ openwrt_build_path | dirname }}"
     state: directory
     mode: '0755'
   delegate_to: "{{ openwrt_build_server }}"
   become: false
   tags:
     - openwrt
+    - setup
+    - clone
+
+- name: Ensure local artifacts directory exists
+  ansible.builtin.file:
+    path: "{{ openwrt_local_artifacts_dir }}"
+    state: directory
+    mode: '0755'
+  tags:
+    - openwrt
+    - setup
+    - artifacts
+
+# ============================================================================
+# Clone Repository
+# ============================================================================
+
+- name: Check if OpenWrt repository already exists
+  ansible.builtin.stat:
+    path: "{{ openwrt_repo_dir }}.git"
+  delegate_to: "{{ openwrt_build_server }}"
+  register: openwrt_repo_exists
+  tags:
+    - openwrt
+    - clone
+
+- name: Remove existing repository if it exists (for clean clone)
+  ansible.builtin.file:
+    path: "{{ openwrt_repo_dir }}"
+    state: absent
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  when: openwrt_repo_exists.stat.exists and openwrt_force_clone | default(false) | bool
+  tags:
+    - openwrt
+    - clone
+
+- name: Clone OpenMANET OpenWrt repository
+  ansible.builtin.git:
+    repo: "{{ openwrt_repo_url }}"
+    dest: "{{ openwrt_repo_dir }}"
+    version: "{{ openwrt_repo_branch }}"
+    update: yes
+    force: yes
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  when: not openwrt_repo_exists.stat.exists or openwrt_force_clone | default(false) | bool
+  tags:
+    - openwrt
+    - clone
+
+- name: Update repository to specified branch
+  ansible.builtin.git:
+    repo: "{{ openwrt_repo_url }}"
+    dest: "{{ openwrt_repo_dir }}"
+    version: "{{ openwrt_repo_branch }}"
+    update: yes
+    force: yes
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  when: openwrt_repo_exists.stat.exists and not (openwrt_force_clone | default(false) | bool)
+  tags:
+    - openwrt
+    - clone
+
+# ============================================================================
+# Initialize Build Environment (morse_setup.sh)
+# ============================================================================
+
+- name: Check if morse_setup.sh exists
+  ansible.builtin.stat:
+    path: "{{ openwrt_repo_dir }}scripts/morse_setup.sh"
+  delegate_to: "{{ openwrt_build_server }}"
+  register: morse_setup_exists
+  tags:
+    - openwrt
+    - setup
+    - morse
+
+- name: Run morse_setup.sh to initialize build environment
+  ansible.builtin.command:
+    cmd: ./scripts/morse_setup.sh -i -b {{ openwrt_build_config }}
+    chdir: "{{ openwrt_repo_dir }}"
+    creates: "{{ openwrt_repo_dir }}.config"
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  when: morse_setup_exists.stat.exists
+  tags:
+    - openwrt
+    - setup
+    - morse
+
+- name: Verify morse_setup.sh completed successfully
+  ansible.builtin.stat:
+    path: "{{ openwrt_repo_dir }}.config"
+  delegate_to: "{{ openwrt_build_server }}"
+  register: config_exists
+  tags:
+    - openwrt
+    - setup
+    - morse
+
+- name: Fail if .config was not created
+  ansible.builtin.fail:
+    msg: "morse_setup.sh failed - .config file not found"
+  when: not config_exists.stat.exists and morse_setup_exists.stat.exists
+  tags:
+    - openwrt
+    - setup
+    - morse
+
+# ============================================================================
+# Apply Docker Diffconfig
+# ============================================================================
+
+- name: Ensure boards/common directory exists on build server
+  ansible.builtin.file:
+    path: "{{ openwrt_repo_dir }}boards/common"
+    state: directory
+    mode: '0755'
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+    - diffconfig
 
 - name: Copy docker_diffconfig to build server
   ansible.builtin.copy:
@@ -51,24 +191,188 @@
   become: false
   tags:
     - openwrt
+    - diffconfig
 
-- name: Verify docker_diffconfig deployment
-  ansible.builtin.command:
+- name: Apply docker_diffconfig to build configuration
+  ansible.builtin.shell:
     cmd: |
-      ls -lh {{ openwrt_diffconfig_path }}
-      echo ""
-      echo "First 20 lines of docker_diffconfig:"
-      head -20 {{ openwrt_diffconfig_path }}
+      cat {{ openwrt_diffconfig_path }} >> .config
+      make defconfig
+    chdir: "{{ openwrt_repo_dir }}"
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+    - diffconfig
+
+- name: Verify docker_diffconfig was applied
+  ansible.builtin.command:
+    cmd: grep -q "CONFIG_PACKAGE_docker=y" .config && echo "Docker config found" || echo "Docker config NOT found"
+    chdir: "{{ openwrt_repo_dir }}"
   delegate_to: "{{ openwrt_build_server }}"
   become: false
   register: diffconfig_verify
   changed_when: false
   tags:
     - openwrt
+    - diffconfig
 
-- name: Display deployment verification
+- name: Display diffconfig verification
   ansible.builtin.debug:
-    msg: "{{ diffconfig_verify.stdout_lines }}"
+    msg: "{{ diffconfig_verify.stdout }}"
   tags:
     - openwrt
+    - diffconfig
 
+# ============================================================================
+# Download Sources
+# ============================================================================
+
+- name: Download all required source packages
+  ansible.builtin.command:
+    cmd: make download
+    chdir: "{{ openwrt_repo_dir }}"
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  async: 3600
+  poll: 30
+  tags:
+    - openwrt
+    - download
+
+# ============================================================================
+# Build Firmware
+# ============================================================================
+# Note: Build can take 15+ minutes depending on hardware and selected packages
+
+- name: Display build start message
+  ansible.builtin.debug:
+    msg: |
+      Starting OpenWrt firmware build...
+      - Build jobs: {{ openwrt_build_jobs }} parallel jobs
+      - This may take 15+ minutes - please be patient
+      - Build progress will be checked every 30 seconds
+      - Build log is being saved to: {{ openwrt_repo_dir }}log.txt
+  tags:
+    - openwrt
+    - build
+
+- name: Build OpenWrt firmware image
+  ansible.builtin.shell:
+    cmd: make -j{{ openwrt_build_jobs }} V={{ openwrt_build_verbose }} 2>&1 | tee log.txt
+    chdir: "{{ openwrt_repo_dir }}"
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  async: 3600
+  poll: 30
+  register: build_result
+  tags:
+    - openwrt
+    - build
+
+- name: Display build completion status
+  ansible.builtin.debug:
+    msg: |
+      Build task completed!
+      - Status: {{ 'SUCCESS' if build_result.finished == 1 else 'FAILED' if build_result.failed else 'UNKNOWN' }}
+      - Check the build log for details: {{ openwrt_repo_dir }}log.txt
+  when: build_result.finished is defined
+  tags:
+    - openwrt
+    - build
+
+- name: Fail if build did not complete successfully
+  ansible.builtin.fail:
+    msg: "Build failed. Check {{ openwrt_repo_dir }}log.txt on the build server for details."
+  when: build_result.finished is defined and build_result.failed | default(false) | bool
+  tags:
+    - openwrt
+    - build
+
+- name: Check build log for errors
+  ansible.builtin.shell:
+    cmd: tail -50 log.txt | grep -i "error\|failed\|fatal" || echo "No errors found in last 50 lines"
+    chdir: "{{ openwrt_repo_dir }}"
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  register: build_errors
+  changed_when: false
+  failed_when: false
+  tags:
+    - openwrt
+    - build
+
+- name: Display build errors if any
+  ansible.builtin.debug:
+    msg: "{{ build_errors.stdout_lines }}"
+  when: build_errors.stdout | length > 0
+  tags:
+    - openwrt
+    - build
+
+- name: Find built firmware images
+  ansible.builtin.find:
+    paths: "{{ openwrt_repo_dir }}bin/targets"
+    patterns: "*.img.gz"
+    recurse: true
+  delegate_to: "{{ openwrt_build_server }}"
+  register: firmware_images
+  tags:
+    - openwrt
+    - build
+    - artifacts
+
+- name: Display found firmware images
+  ansible.builtin.debug:
+    msg: "Found {{ firmware_images.files | length }} firmware image(s): {{ firmware_images.files | map(attribute='path') | list }}"
+  tags:
+    - openwrt
+    - build
+    - artifacts
+
+# ============================================================================
+# Pull Build Artifacts to Local Machine
+# ============================================================================
+
+- name: Download build log to local machine
+  ansible.builtin.fetch:
+    src: "{{ openwrt_repo_dir }}log.txt"
+    dest: "{{ openwrt_local_build_log }}"
+    flat: yes
+  delegate_to: "{{ openwrt_build_server }}"
+  when: firmware_images.files | length > 0
+  tags:
+    - openwrt
+    - artifacts
+
+- name: Download firmware images to local machine
+  ansible.builtin.fetch:
+    src: "{{ item.path }}"
+    dest: "{{ openwrt_local_artifacts_dir }}/{{ item.path | basename }}"
+    flat: yes
+  delegate_to: "{{ openwrt_build_server }}"
+  loop: "{{ firmware_images.files }}"
+  when: firmware_images.files | length > 0
+  tags:
+    - openwrt
+    - artifacts
+
+- name: Note about packages directory
+  ansible.builtin.debug:
+    msg: |
+      Packages directory can be downloaded separately if needed:
+      scp -i {{ openwrt_build_ssh_key | expanduser }} -r {{ openwrt_build_user }}@{{ openwrt_build_server }}:{{ openwrt_repo_dir }}bin/targets/ {{ openwrt_local_artifacts_dir }}/packages/
+  when: firmware_images.files | length > 0
+  tags:
+    - openwrt
+    - artifacts
+
+- name: Display downloaded artifacts summary
+  ansible.builtin.debug:
+    msg: |
+      Build artifacts downloaded to: {{ openwrt_local_artifacts_dir }}
+      - Build log: {{ openwrt_local_build_log }}
+      - Firmware images: {{ firmware_images.files | length }} file(s)
+  tags:
+    - openwrt
+    - artifacts
