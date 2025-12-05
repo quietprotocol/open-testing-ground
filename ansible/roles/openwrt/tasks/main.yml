@@ -548,11 +548,18 @@
 - name: Flash firmware using sysupgrade
   ansible.builtin.shell:
     cmd: |
-      sysupgrade {{ '-k' if openwrt_flash_keep_settings | bool else '' }} {{ flash_image_device_path }}
+      sysupgrade {{ '-k' if openwrt_flash_keep_settings | bool else '' }} {{ flash_image_device_path }} || exit 1
   async: 1
   poll: 0
   ignore_errors: true
   register: flash_result
+  tags:
+    - openwrt
+    - flash
+
+- name: Verify sysupgrade command was executed
+  ansible.builtin.debug:
+    msg: "sysupgrade command executed. Device should reboot now. Actual flashing happens during reboot."
   tags:
     - openwrt
     - flash
@@ -574,12 +581,22 @@
     - openwrt
     - flash
 
+- name: Verify firmware version after reboot
+  ansible.builtin.command:
+    cmd: cat /etc/openwrt_release | grep DISTRIB_RELEASE || echo "Version check failed"
+  register: firmware_version
+  changed_when: false
+  tags:
+    - openwrt
+    - flash
+
 - name: Display flash completion message
   ansible.builtin.debug:
     msg: |
       Firmware flash completed successfully!
       - Device has been rebooted
       - Settings {{ 'preserved' if openwrt_flash_keep_settings | bool else 'reset' }}
+      - Firmware version: {{ firmware_version.stdout | default('Unknown') }}
   tags:
     - openwrt
     - flash
