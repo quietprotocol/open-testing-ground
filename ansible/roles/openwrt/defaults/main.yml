@@ -25,7 +25,7 @@ openwrt_build_verbose: "sc"  # Verbose level: sc, 1, 0
 openwrt_diffconfig_path: "{{ openwrt_repo_dir }}boards/common/docker_diffconfig"
 
 # Local paths for build artifacts
-openwrt_local_artifacts_dir: "{{ playbook_dir }}/../artifacts/openwrt"
+openwrt_local_artifacts_dir: "{{ playbook_dir }}/../../artifacts/openwrt"
 openwrt_local_build_log: "{{ openwrt_local_artifacts_dir }}/build.log"
 
 # Flash configuration

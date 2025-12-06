@@ -429,13 +429,31 @@
 # Note: Flashing firmware will reboot the device. Use tags to run only flashing.
 # If artifacts were downloaded, they will be used automatically.
 
+- name: Resolve artifacts directory to absolute path
+  ansible.builtin.shell: |
+    python3 -c "import os; print(os.path.abspath('{{ openwrt_local_artifacts_dir | expanduser }}'))"
+  register: artifacts_dir_resolved
+  delegate_to: localhost
+  changed_when: false
+  tags:
+    - openwrt
+    - flash
+
+- name: Set resolved artifacts directory
+  ansible.builtin.set_fact:
+    openwrt_local_artifacts_dir_abs: "{{ artifacts_dir_resolved.stdout }}"
+  tags:
+    - openwrt
+    - flash
+
 - name: Find downloaded firmware images in artifacts directory
   ansible.builtin.find:
-    paths: "{{ openwrt_local_artifacts_dir }}"
+    paths: "{{ openwrt_local_artifacts_dir_abs }}"
     patterns: "*.img.gz"
     recurse: false
   register: local_firmware_images
   delegate_to: localhost
+  failed_when: false
   tags:
     - openwrt
     - flash
@@ -443,6 +461,25 @@
 - name: Set default flash image from artifacts if not specified
   ansible.builtin.set_fact:
     openwrt_flash_image_local: "{{ local_firmware_images.files[0].path if (openwrt_flash_image_local == '' and openwrt_flash_image_path == '' and local_firmware_images.files | length > 0) else openwrt_flash_image_local }}"
+  tags:
+    - openwrt
+    - flash
+
+- name: Resolve flash image path to absolute path if set
+  ansible.builtin.shell: |
+    python3 -c "import os; print(os.path.abspath('{{ openwrt_flash_image_local | expanduser }}'))"
+  register: flash_image_resolved
+  delegate_to: localhost
+  changed_when: false
+  when: openwrt_flash_image_local != ''
+  tags:
+    - openwrt
+    - flash
+
+- name: Set resolved flash image path
+  ansible.builtin.set_fact:
+    openwrt_flash_image_local: "{{ flash_image_resolved.stdout }}"
+  when: openwrt_flash_image_local != '' and flash_image_resolved is defined
   tags:
     - openwrt
     - flash
@@ -582,7 +619,7 @@
     - flash
 
 - name: Verify firmware version after reboot
-  ansible.builtin.command:
+  ansible.builtin.shell:
     cmd: cat /etc/openwrt_release | grep DISTRIB_RELEASE || echo "Version check failed"
   register: firmware_version
   changed_when: false
