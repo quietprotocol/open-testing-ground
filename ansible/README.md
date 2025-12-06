@@ -177,6 +177,22 @@ Override these in `group_vars/all.yml` or `host_vars/<hostname>.yml` if needed.
 
 **Note:** After deployment, you need to run `make up` or `docker compose up -d` on the device.
 
+**ATAK Plugins:**
+
+The following ATAK plugins are available for download from APKPure. These can be uploaded to OpenTAKServer once you have a hosting location:
+
+- **UAS Tool**: https://apkpure.com/atak-plugin-uas-tool/com.atakmap.android.uastool.plugin
+- **Data Sync**: https://apkpure.com/datasync/com.atakmap.android.datasync.plugin
+- **Drone Hone**: https://apkpure.com/dronehone/com.atakmap.android.dronehone.plugin
+- **TAK Chat**: https://apkpure.com/takchat/com.atakmap.android.takchat.plugin
+- **GBR VX**: https://apkpure.com/gbr.vx/com.atakmap.android.gbr.vx.plugin
+- **GeoCam**: https://apkpure.com/geocam/com.atakmap.android.geocam.plugin
+- **Compass Nav**: https://apkpure.com/atak-plugin-compass-nav/com.atakmap.android.compassnav.plugin
+- **WASP**: https://apkpure.com/atak-plugin-wasp/com.atakmap.android.wasp.plugin
+- **VNS**: https://apkpure.com/atak-plugin-vns/com.atakmap.android.vns.plugin
+- **GRG Builder**: https://apkpure.com/atak-plugin-grg-builder/com.atakmap.android.grgbuilder.plugin
+- **Meshtastic**: https://apkpure.com/meshtastic/com.geeksville.mesh
+
 ### openwrt
 
 Complete OpenWrt firmware build workflow. This role handles the entire build process from cloning the repository to pulling build artifacts back to your local machine.
