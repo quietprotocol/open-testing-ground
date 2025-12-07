@@ -1,0 +1,80 @@
+---
+# Default variables for opentakserver-packages role
+
+# OpenTAKServer connection
+# Defaults to the current host's ansible_host or inventory_hostname
+# Override in group_vars or host_vars to point to specific OpenTAKServer instance
+opentakserver_host: "{{ ansible_host | default(inventory_hostname) }}"
+opentakserver_port: 8880
+opentakserver_username: administrator
+opentakserver_password: password
+
+# GitHub release information
+packages_release_tag: opentakserver-atak-apks
+packages_release_url: "https://github.com/martinmalek/OpenMANET-testing-ground/releases/download/{{ packages_release_tag }}"
+
+# Package files to upload (from GitHub release)
+# Note: .xapk files are ZIP archives and will be extracted to find the .apk file inside
+packages_files:
+  - name: "ATAK-Plugin-Meshtastic.Plugin-1.1.23-bdcc9b10-5.6.0-civ-release.apk"
+    url: "{{ packages_release_url }}/ATAK-Plugin-Meshtastic.Plugin-1.1.23-bdcc9b10-5.6.0-civ-release.apk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.6.0"
+  - name: "ATAK.Plugin_.Compass.Nav_1.0.8b62eaf6.-.5.4.0._APKPure.apk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.Compass.Nav_1.0.8b62eaf6.-.5.4.0._APKPure.apk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.Data.Sync_3.6.2.cb8c6b5a.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.Data.Sync_3.6.2.cb8c6b5a.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.Drone.Hone_3.2.e80a9db3.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.Drone.Hone_3.2.e80a9db3.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.GeoCam_1.1.20f6e764.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.GeoCam_1.1.20f6e764.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.GRG.Builder_3.10.4e0e1812.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.GRG.Builder_3.10.4e0e1812.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.TAK.Chat_1.11.b2b6fb11.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.TAK.Chat_1.11.b2b6fb11.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.UAS.Tool_12.12.2-playstore.9e18a9ad.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.UAS.Tool_12.12.2-playstore.9e18a9ad.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.VNS_3.12.5962d21d.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.VNS_3.12.5962d21d.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.Vx_1.7.8.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.Vx_1.7.8.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.WASP_5.4.0.1.R1.627ecca9.-.5.4.0._APKPure.apk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.WASP_5.4.0.1.R1.627ecca9.-.5.4.0._APKPure.apk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+
+# Local temporary directory for downloads
+packages_temp_dir: /tmp/packages_uploads
+
+# OpenTAKServer API endpoint for package uploads
+opentakserver_upload_endpoint: /api/packages
+

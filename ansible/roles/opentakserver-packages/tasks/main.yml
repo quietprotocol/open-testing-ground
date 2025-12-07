@@ -1,0 +1,270 @@
+---
+# OpenTAKServer Packages Upload Role
+# Uploads ATAK plugin APK files from GitHub release to OpenTAKServer
+# Uses token authentication: https://docs.opentakserver.io/authentication.html
+# Reference: https://github.com/brian7704/OpenTAKServer/blob/master/opentakserver/blueprints/ots_api/package_api.py
+
+- name: Ensure temporary directory exists
+  ansible.builtin.file:
+    path: "{{ packages_temp_dir }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Check if curl is available
+  ansible.builtin.command:
+    cmd: which curl
+  register: curl_check
+  changed_when: false
+  failed_when: false
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Fail if curl is not available
+  ansible.builtin.fail:
+    msg: "curl is required but not installed on the control machine"
+  when: curl_check.rc != 0
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Check if python3 is available
+  ansible.builtin.command:
+    cmd: which python3
+  register: python3_check
+  changed_when: false
+  failed_when: false
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Get authentication token from OpenTAKServer
+  ansible.builtin.uri:
+    url: "http://{{ opentakserver_host }}:{{ opentakserver_port }}/api/login?include_auth_token="
+    method: POST
+    body_format: json
+    body:
+      username: "{{ opentakserver_username }}"
+      password: "{{ opentakserver_password }}"
+    status_code: [200]
+    return_content: yes
+  register: auth_response
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Extract authentication token from response
+  ansible.builtin.set_fact:
+    auth_token: "{{ auth_response.json.response.user.authentication_token }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Display authentication success
+  ansible.builtin.debug:
+    msg: "Successfully authenticated with OpenTAKServer"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Download package files from GitHub release
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ packages_temp_dir }}/{{ item.name }}"
+    mode: '0644'
+    timeout: 300
+  loop: "{{ packages_files }}"
+  register: packages_downloads
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Verify downloaded files exist
+  ansible.builtin.stat:
+    path: "{{ item.dest }}"
+  loop: "{{ packages_downloads.results }}"
+  register: packages_file_stats
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Create extraction directories for .xapk files
+  ansible.builtin.file:
+    path: "{{ packages_temp_dir }}/{{ item[0].stat.path | basename | regex_replace('\\.xapk$', '') }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ packages_file_stats.results | zip(packages_files) | list }}"
+  when: item[0].stat.path is match('.*\\.xapk$')
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Extract .xapk files to find .apk files inside
+  ansible.builtin.unarchive:
+    src: "{{ item[0].stat.path }}"
+    dest: "{{ packages_temp_dir }}/{{ item[0].stat.path | basename | regex_replace('\\.xapk$', '') }}"
+    remote_src: false
+  loop: "{{ packages_file_stats.results | zip(packages_files) | list }}"
+  when: item[0].stat.path is match('.*\\.xapk$')
+  register: xapk_extractions
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Find .apk files in extracted .xapk directories
+  ansible.builtin.find:
+    paths: "{{ packages_temp_dir }}/{{ item.item[0].stat.path | basename | regex_replace('\\.xapk$', '') }}"
+    patterns: "*.apk"
+    file_type: file
+    recurse: yes
+  loop: "{{ xapk_extractions.results | default([]) }}"
+  when: item.changed # Only process if extraction actually happened
+  register: extracted_apks
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Build final list of .apk files to upload
+  ansible.builtin.set_fact:
+    packages_final_files: "{{ packages_final_files | default([]) + [{'original_file': item[0].stat.path, 'apk_file': item[0].stat.path, 'package_info': item[1]}] }}"
+  loop: "{{ packages_file_stats.results | zip(packages_files) | list }}"
+  when: item[0].stat.path is match('.*\\.apk$')
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Add extracted .apk files from .xapk archives to final list
+  ansible.builtin.set_fact:
+    packages_final_files: "{{ packages_final_files | default([]) + [{'original_file': item[0].item[0].stat.path, 'apk_file': item[1].files[0].path, 'package_info': item[0].item[1]}] }}"
+  loop: "{{ xapk_extractions.results | default([]) | zip(extracted_apks.results | default([])) | list }}"
+  when: 
+    - item[1].files is defined
+    - item[1].files | length > 0
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Upload package files to OpenTAKServer
+  ansible.builtin.shell:
+    cmd: |
+      curl_cmd="curl -s -w \"\\n%{http_code}\" -X POST \\
+        -H \"Authentication-Token: {{ auth_token }}\" \\
+        -F \"apk=@{{ item.apk_file }}\" \\
+        -F \"platform={{ item.package_info.platform | default('Android') }}\" \\
+        -F \"plugin_type={{ item.package_info.plugin_type | default('plugin') }}\""
+      {% if item.package_info.atak_version is defined and item.package_info.atak_version %}
+      curl_cmd="$curl_cmd -F \"atak_version={{ item.package_info.atak_version }}\""
+      {% endif %}
+      curl_cmd="$curl_cmd \"http://{{ opentakserver_host }}:{{ opentakserver_port }}{{ opentakserver_upload_endpoint }}\""
+      eval "$curl_cmd"
+  loop: "{{ packages_final_files }}"
+  loop_control:
+    label: "{{ item.apk_file | basename }}"
+  register: packages_uploads
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Parse upload response
+  ansible.builtin.set_fact:
+    upload_results: "{{ upload_results | default([]) + [{'file': item.item.apk_file, 'http_code': item.stdout_lines[-1], 'body': item.stdout_lines[0:-1] | join('\n')}] }}"
+  loop: "{{ packages_uploads.results }}"
+  loop_control:
+    label: "{{ item.item.apk_file | basename }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Display upload results
+  ansible.builtin.debug:
+    msg: |
+      File: {{ item.file | basename }}
+      HTTP Status: {{ item.http_code }}{% if item.http_code == '200' or item.http_code == '201' %} ✓{% else %} ✗{% endif %}
+      {% if item.http_code != '200' and item.http_code != '201' %}
+      Error Response: {{ item.body | default('No error message') | truncate(500) }}
+      {% endif %}
+  loop: "{{ upload_results }}"
+  loop_control:
+    label: "{{ item.file | basename }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Clean up temporary files
+  ansible.builtin.file:
+    path: "{{ item.stat.path }}"
+    state: absent
+  loop: "{{ packages_file_stats.results }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Clean up extracted .xapk directories
+  ansible.builtin.file:
+    path: "{{ packages_temp_dir }}/{{ item.item[0].stat.path | basename | regex_replace('\\.xapk$', '') }}"
+    state: absent
+  loop: "{{ xapk_extractions.results | default([]) }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Display summary
+  ansible.builtin.debug:
+    msg: "Package upload complete. {{ upload_results | selectattr('http_code', 'match', '^(200|201)$') | list | length }}/{{ packages_final_files | length }} files uploaded successfully."
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+
+- name: Fail if any uploads failed
+  ansible.builtin.fail:
+    msg: "Some package files failed to upload. Check the upload results above."
+  when: upload_results | selectattr('http_code', 'match', '^(200|201)$') | list | length != packages_final_files | length
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - opentakserver-packages
+    - packages
+

@@ -72,3 +72,16 @@
         - opentakserver-dted
         - dted
 
+- name: Upload ATAK packages to OpenTAKServer
+  hosts: openmanet_devices
+  gather_facts: no
+  become: no
+  
+  tasks:
+    - name: Include opentakserver-packages role
+      include_role:
+        name: opentakserver-packages
+      tags:
+        - opentakserver-packages
+        - packages
+
