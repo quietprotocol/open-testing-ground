@@ -71,6 +71,16 @@ packages_files:
     platform: "Android"
     plugin_type: "plugin"
     atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.PDF_1.2.7.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.PDF_1.2.7.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
+  - name: "ATAK.Plugin_.VideoWall_1.8.1.-.5.4.0._APKPure.xapk"
+    url: "{{ packages_release_url }}/ATAK.Plugin_.VideoWall_1.8.1.-.5.4.0._APKPure.xapk"
+    platform: "Android"
+    plugin_type: "plugin"
+    atak_version: "5.4.0"
 
 # Local temporary directory for downloads
 packages_temp_dir: /tmp/packages_uploads
