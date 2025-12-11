@@ -1,4 +1,4 @@
-# OpenMANET Ansible Deployment
+# Open Ansible Deployment
 
 This directory contains Ansible playbooks and roles for deploying and managing OpenMANET gateway configurations.
 

@@ -1,8 +1,8 @@
-# OpenMANET Testing Ground
+# Open Testing Ground
 
 This repository contains setup scripts and documentation for configuring OpenMANET gateways running OpenWrt with Docker, GPS, and TAK Server support.
 
-**DISCLAIMER! THIS IS CLANKER TERRITORY. USE AT YOUR OWN RISK. NO REFUNDS.**
+**DISCLAIMER! THIS PROJECT IS NOT ASSOCIATED WITH OPENMANET. IT'S MERELY A SANDBOX FOR TESTING POSSIBILITIES THIS IS CLANKER TERRITORY. USE AT YOUR OWN RISK. NO REFUNDS.**
 
 ## Overview
 
