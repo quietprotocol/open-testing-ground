@@ -50,7 +50,7 @@ ansible/
 │   ├── gps.yml              # GPS setup
 │   ├── gps-reset.yml        # GPS reset
 │   ├── opentakserver.yml    # OpenTAKServer deployment
-│   └── openwrt.yml          # OpenWrt firmware build
+│   └── openmanet-image.yml  # OpenWrt firmware build
 └── roles/                   # Ansible roles
     ├── govtak/              # GovTAK Server role
     ├── docker/               # Docker role
@@ -60,7 +60,7 @@ ansible/
     ├── opentakserver-dted/  # OpenTAKServer DTED upload role
     ├── opentakserver-packages/  # OpenTAKServer packages upload role
     ├── opentakserver-users/  # OpenTAKServer user creation role
-    └── openwrt/             # OpenWrt build role
+    └── openmanet-image/     # OpenWrt build role
 ```
 
 ## Inventory Configuration
@@ -94,7 +94,7 @@ Each role has its own documentation. See the README.md file in each role directo
 - **[opentakserver-dted](roles/opentakserver-dted/README.md)** - Uploads DTED files from GitHub releases to OpenTAKServer
 - **[opentakserver-packages](roles/opentakserver-packages/README.md)** - Uploads ATAK plugin APK files from GitHub releases to OpenTAKServer
 - **[opentakserver-users](roles/opentakserver-users/README.md)** - Creates users in OpenTAKServer using the API
-- **[openwrt](roles/openwrt/README.md)** - Complete OpenWrt firmware build workflow
+- **[openmanet-image](roles/openmanet-image/README.md)** - Complete OpenWrt firmware build workflow
 
 ## Ad-Hoc Commands
 

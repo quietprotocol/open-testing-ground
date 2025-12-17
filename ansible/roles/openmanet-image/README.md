@@ -1,4 +1,4 @@
-# openwrt
+# openmanet-image
 
 Complete OpenWrt firmware build workflow. This role handles the entire build process from cloning the repository to pulling build artifacts back to your local machine.
 
@@ -18,15 +18,15 @@ Complete OpenWrt firmware build workflow. This role handles the entire build pro
 
 ```bash
 # Full build workflow
-ansible-playbook playbooks/openwrt.yml
+ansible-playbook playbooks/openmanet-image.yml
 
 # Run specific steps using tags
-ansible-playbook playbooks/openwrt.yml --tags openwrt-clone      # Just clone repo
-ansible-playbook playbooks/openwrt.yml --tags openwrt-setup       # Setup and morse
-ansible-playbook playbooks/openwrt.yml --tags openwrt-diffconfig  # Apply docker config
-ansible-playbook playbooks/openwrt.yml --tags openwrt-download    # Download sources
-ansible-playbook playbooks/openwrt.yml --tags openwrt-build       # Build firmware
-ansible-playbook playbooks/openwrt.yml --tags openwrt-artifacts   # Pull artifacts
+ansible-playbook playbooks/openmanet-image.yml --tags openwrt-clone      # Just clone repo
+ansible-playbook playbooks/openmanet-image.yml --tags openwrt-setup       # Setup and morse
+ansible-playbook playbooks/openmanet-image.yml --tags openwrt-diffconfig  # Apply docker config
+ansible-playbook playbooks/openmanet-image.yml --tags openwrt-download    # Download sources
+ansible-playbook playbooks/openmanet-image.yml --tags openwrt-build       # Build firmware
+ansible-playbook playbooks/openmanet-image.yml --tags openwrt-artifacts   # Pull artifacts
 ```
 
 ## Variables

@@ -10,10 +10,10 @@
 # 7. Pull build artifacts back to local machine
 #
 # Usage:
-#   ansible-playbook playbooks/openwrt.yml                    # Full build
-#   ansible-playbook playbooks/openwrt.yml --tags clone      # Just clone
-#   ansible-playbook playbooks/openwrt.yml --tags build      # Just build
-#   ansible-playbook playbooks/openwrt.yml --tags artifacts   # Just pull artifacts
+#   ansible-playbook playbooks/openmanet-image.yml                    # Full build
+#   ansible-playbook playbooks/openmanet-image.yml --tags clone      # Just clone
+#   ansible-playbook playbooks/openmanet-image.yml --tags build      # Just build
+#   ansible-playbook playbooks/openmanet-image.yml --tags artifacts   # Just pull artifacts
 
 # ============================================================================
 # Setup and Validation

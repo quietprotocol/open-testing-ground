@@ -42,7 +42,7 @@
 
     - name: Include openwrt role
       include_role:
-        name: openwrt
+        name: openmanet-image
       tags:
         - openwrt
         - openwrt-flash
@@ -61,7 +61,7 @@
   tasks:
     - name: Include openwrt role
       include_role:
-        name: openwrt
+        name: openmanet-image
       tags:
         - openwrt
 

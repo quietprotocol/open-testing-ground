@@ -1,6 +1,6 @@
 ---
 # Playbook for Complete OpenWrt Build Workflow
-# Usage: ansible-playbook playbooks/openwrt.yml
+# Usage: ansible-playbook playbooks/openmanet-image.yml
 #
 # This playbook performs a complete OpenWrt firmware build:
 # 1. Clones OpenMANET/openwrt repository
@@ -15,10 +15,10 @@
 # Configure build server connection in inventory or via variables.
 #
 # Examples:
-#   ansible-playbook playbooks/openwrt.yml                    # Full build
-#   ansible-playbook playbooks/openwrt.yml --tags clone       # Just clone
-#   ansible-playbook playbooks/openwrt.yml --tags build       # Just build
-#   ansible-playbook playbooks/openwrt.yml --tags artifacts   # Just pull artifacts
+#   ansible-playbook playbooks/openmanet-image.yml                    # Full build
+#   ansible-playbook playbooks/openmanet-image.yml --tags clone       # Just clone
+#   ansible-playbook playbooks/openmanet-image.yml --tags build       # Just build
+#   ansible-playbook playbooks/openmanet-image.yml --tags artifacts   # Just pull artifacts
 #
 # Note: Flashing is done via the site.yml playbook targeting devices:
 #   ansible-playbook playbooks/site.yml --tags flash --limit gateway \
@@ -32,5 +32,5 @@
     - ../group_vars/all.yml
   
   roles:
-    - openwrt
+    - openmanet-image
 

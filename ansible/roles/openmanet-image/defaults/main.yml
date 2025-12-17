@@ -1,5 +1,5 @@
 ---
-# Default variables for openwrt role
+# Default variables for openmanet-image role
 #
 # Note: This role builds firmware on a REMOTE build server.
 # All build tasks are delegated to the build server via SSH.
