@@ -43,19 +43,34 @@ start_service() {
 	# Try CDC-ECM first (better Linux/Android compatibility), fallback to default (RNDIS)
 	if ! lsmod | grep -q "^g_ether"; then
 		counter=0
-		while [ $counter -lt 5 ]; do
+		module_loaded=0
+		while [ $counter -lt 5 ] && [ $module_loaded -eq 0 ]; do
 			# Try loading with use_eem=0 to prefer CDC-ECM over RNDIS
 			# This may work better with some Android devices
-			if modprobe g_ether use_eem=0 2>/dev/null; then
-				break
+			if modprobe g_ether use_eem=0 2>&1; then
+				# Verify module actually loaded
+				if lsmod | grep -q "^g_ether"; then
+					module_loaded=1
+					break
+				fi
 			fi
 			# Fallback to default (RNDIS) if CDC-ECM fails
-			if modprobe g_ether 2>/dev/null; then
-				break
+			if modprobe g_ether 2>&1; then
+				# Verify module actually loaded
+				if lsmod | grep -q "^g_ether"; then
+					module_loaded=1
+					break
+				fi
 			fi
 			sleep 2
 			counter=$((counter + 1))
 		done
+		
+		# If module still not loaded after retries, log error
+		if [ $module_loaded -eq 0 ]; then
+			logger -t usbc-gadget "ERROR: Failed to load g_ether module after $counter attempts"
+			return 1
+		fi
 	fi
 
 	# Wait for usb0 interface to appear (up to 15 seconds)
@@ -71,6 +86,12 @@ start_service() {
 
 	# If usb0 interface appeared, add it to the mesh bridge
 	if ip link show {{ usbc_gadget_interface }} >/dev/null 2>&1; then
+		# Verify bridge exists before trying to add interface
+		if ! ip link show {{ usbc_gadget_mesh_bridge }} >/dev/null 2>&1; then
+			logger -t usbc-gadget "ERROR: Bridge {{ usbc_gadget_mesh_bridge }} does not exist"
+			return 1
+		fi
+		
 		# Bring up the interface first
 		ip link set {{ usbc_gadget_interface }} up
 		
@@ -79,16 +100,24 @@ start_service() {
 		
 		# Add usb0 to the mesh network bridge using brctl
 		# This ensures it's added immediately, then netifd will manage it
-		brctl addif {{ usbc_gadget_mesh_bridge }} {{ usbc_gadget_interface }} 2>/dev/null || {
+		if ! brctl addif {{ usbc_gadget_mesh_bridge }} {{ usbc_gadget_interface }} 2>&1; then
 			# If brctl fails, try using bridge command (newer systems)
-			bridge link set dev {{ usbc_gadget_interface }} master {{ usbc_gadget_mesh_bridge }} 2>/dev/null || true
-		}
+			if ! bridge link set dev {{ usbc_gadget_interface }} master {{ usbc_gadget_mesh_bridge }} 2>&1; then
+				logger -t usbc-gadget "ERROR: Failed to add {{ usbc_gadget_interface }} to bridge {{ usbc_gadget_mesh_bridge }}"
+				return 1
+			fi
+		fi
+		
+		logger -t usbc-gadget "Successfully added {{ usbc_gadget_interface }} to bridge {{ usbc_gadget_mesh_bridge }}"
 		
 		# Reload network to apply UCI bridge configuration and ensure persistence
 		ubus call network reload
 		
 		# Small delay for network reload to complete
 		sleep 2
+	else
+		logger -t usbc-gadget "ERROR: Interface {{ usbc_gadget_interface }} did not appear after module load"
+		return 1
 	fi
 }
 
