@@ -6,6 +6,15 @@
   hosts: openmanet_devices
   gather_facts: no
   become: no
+  tags:
+    - gateway
+    - docker
+    - gps
+    - gps-reset
+    - govtak
+    - ots
+    - openwrt
+    - usbc-gadget
   
   tasks:
     - name: Include docker role
@@ -57,6 +66,9 @@
   hosts: localhost
   gather_facts: no
   become: no
+  tags:
+    - openwrt
+    - openwrt-build
   
   tasks:
     - name: Include openwrt role
@@ -69,6 +81,8 @@
   hosts: openmanet_devices
   gather_facts: no
   become: no
+  tags:
+    - ots-dted
   
   tasks:
     - name: Include opentakserver-dted role
@@ -81,6 +95,8 @@
   hosts: openmanet_devices
   gather_facts: no
   become: no
+  tags:
+    - ots-packages
   
   tasks:
     - name: Include opentakserver-packages role
@@ -93,6 +109,8 @@
   hosts: openmanet_devices
   gather_facts: no
   become: no
+  tags:
+    - ots-users
   
   tasks:
     - name: Include opentakserver-users role

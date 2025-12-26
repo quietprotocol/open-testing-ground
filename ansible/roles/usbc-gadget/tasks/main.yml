@@ -191,3 +191,29 @@
   tags:
     - usbc-gadget
     - usbc-gadget-init
+
+# ============================================================================
+# Deploy USB Host Mode Hotplug Script (for EUDs via USB-A ports)
+# ============================================================================
+
+- name: Create hotplug.d/net directory if it doesn't exist
+  ansible.builtin.file:
+    path: /etc/hotplug.d/net
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  tags:
+    - usbc-gadget
+    - usbc-gadget-hotplug
+
+- name: Deploy USB host mode hotplug script (for EUDs via USB-A)
+  ansible.builtin.template:
+    src: usb-ethernet-hotplug.j2
+    dest: /etc/hotplug.d/net/10-usb-eud
+    mode: '0755'
+    owner: root
+    group: root
+  tags:
+    - usbc-gadget
+    - usbc-gadget-hotplug

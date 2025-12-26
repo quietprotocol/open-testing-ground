@@ -1,0 +1,75 @@
+#!/bin/sh
+# USB Host Mode Hotplug Script for OpenWrt
+# Automatically adds USB-connected EUDs (via USB-A ports) to the mesh network bridge
+# This script handles EUDs connected via: Pi USB-A port → USB-C cable → EUD USB-C port
+# The EUD acts as a USB gadget, the Pi acts as USB host
+# This script is called by netifd when network interfaces are added
+
+# OpenWrt hotplug environment variables:
+# ACTION: add, remove, update
+# INTERFACE: interface name (e.g., eth1, usb1, usb2)
+# DEVICE: device name
+
+# Skip the Pi's own USB-C gadget interface (usb0) and built-in interfaces
+[ "$INTERFACE" = "usb0" ] && exit 0
+[ "$INTERFACE" = "eth0" ] && exit 0
+[ "$INTERFACE" = "wlan0" ] && exit 0
+
+# Only process add actions
+[ "$ACTION" != "add" ] && exit 0
+
+# Check if this is a USB-connected EUD (gadget device)
+# EUDs in gadget mode connected via USB-A ports show up as eth1, eth2, usb1, usb2, etc.
+if [ -n "$INTERFACE" ] && [ -n "$DEVICE" ]; then
+	# Wait a moment for interface to be fully initialized
+	sleep 3
+	
+	# Check if interface exists
+	if ip link show "$INTERFACE" >/dev/null 2>&1; then
+		# Check if it's already in the bridge
+		if ! brctl show {{ usbc_gadget_mesh_bridge }} 2>/dev/null | grep -q "$INTERFACE" && \
+		   ! bridge link show 2>/dev/null | grep -q "$INTERFACE"; then
+			
+			# Verify bridge exists
+			if ip link show {{ usbc_gadget_mesh_bridge }} >/dev/null 2>&1; then
+				# Bring up the interface
+				ip link set "$INTERFACE" up 2>/dev/null
+				
+				# Small delay
+				sleep 1
+				
+				# Add to bridge
+				if brctl addif {{ usbc_gadget_mesh_bridge }} "$INTERFACE" 2>/dev/null || \
+				   bridge link set dev "$INTERFACE" master {{ usbc_gadget_mesh_bridge }} 2>/dev/null; then
+					logger -t usb-ethernet "Added USB-connected EUD $INTERFACE to bridge {{ usbc_gadget_mesh_bridge }}"
+					
+					# Also add to UCI network config for persistence
+					# Find bridge device index
+					index=0
+					bridge_idx=""
+					while uci get network.@device[$index].name >/dev/null 2>&1; do
+						if [ "$(uci get network.@device[$index].name)" = "{{ usbc_gadget_mesh_bridge }}" ]; then
+							bridge_idx=$index
+							break
+						fi
+						index=$((index + 1))
+					done
+					
+					# Add interface to bridge ports if bridge found
+					if [ -n "$bridge_idx" ]; then
+						uci add_list network.@device[$bridge_idx].ports="$INTERFACE" 2>/dev/null
+						uci commit network 2>/dev/null
+					fi
+					
+					# Reload network to ensure persistence
+					ubus call network reload >/dev/null 2>&1
+				else
+					logger -t usb-ethernet "Failed to add $INTERFACE to bridge {{ usbc_gadget_mesh_bridge }}"
+				fi
+			fi
+		fi
+	fi
+fi
+
+exit 0
+
