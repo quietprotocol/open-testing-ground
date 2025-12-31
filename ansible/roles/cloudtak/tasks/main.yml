@@ -1,0 +1,202 @@
+---
+# CloudTAK deployment role
+
+- name: Ensure CloudTAK directory exists
+  ansible.builtin.file:
+    path: "{{ cloudtak_dir }}"
+    state: directory
+    mode: '0755'
+  tags:
+    - cloudtak
+
+- name: Check if CloudTAK repository exists
+  ansible.builtin.stat:
+    path: "{{ cloudtak_dir }}/.git"
+  register: cloudtak_repo_exists
+  tags:
+    - cloudtak
+
+- name: Clone CloudTAK repository
+  ansible.builtin.git:
+    repo: https://github.com/dfpc-coe/CloudTAK.git
+    dest: "{{ cloudtak_dir }}"
+    update: yes
+    force: yes
+    version: "{{ cloudtak_version | default('main') }}"
+  when: not cloudtak_repo_exists.stat.exists
+  tags:
+    - cloudtak
+
+- name: Update CloudTAK repository
+  ansible.builtin.git:
+    repo: https://github.com/dfpc-coe/CloudTAK.git
+    dest: "{{ cloudtak_dir }}"
+    update: yes
+    force: yes
+    version: "{{ cloudtak_version | default('main') }}"
+  when: cloudtak_repo_exists.stat.exists
+  tags:
+    - cloudtak
+
+- name: Get timestamp for backup
+  ansible.builtin.shell:
+    cmd: date +%s
+  register: backup_timestamp
+  changed_when: false
+  when: compose_backup | default(true)
+  tags:
+    - cloudtak
+
+- name: Backup existing docker-compose.yml if it exists
+  ansible.builtin.copy:
+    src: "{{ cloudtak_dir }}/docker-compose.yml"
+    dest: "{{ cloudtak_dir }}/docker-compose.yml.backup.{{ backup_timestamp.stdout }}"
+    remote_src: yes
+  when: 
+    - compose_backup | default(true)
+    - backup_timestamp is defined
+  ignore_errors: true
+  changed_when: false
+  tags:
+    - cloudtak
+
+- name: Copy docker-compose.yml to device
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ cloudtak_dir }}/docker-compose.yml"
+    mode: '0644'
+  tags:
+    - cloudtak
+
+- name: Ensure api directory exists
+  ansible.builtin.file:
+    path: "{{ cloudtak_dir }}/api"
+    state: directory
+    mode: '0755'
+  tags:
+    - cloudtak
+
+- name: Copy api Dockerfile
+  ansible.builtin.copy:
+    src: api/Dockerfile
+    dest: "{{ cloudtak_dir }}/api/Dockerfile"
+    mode: '0644'
+  tags:
+    - cloudtak
+
+- name: Ensure media directory exists
+  ansible.builtin.file:
+    path: "{{ cloudtak_dir }}/media"
+    state: directory
+    mode: '0755'
+  tags:
+    - cloudtak
+
+- name: Copy mediamtx.yml configuration
+  ansible.builtin.copy:
+    src: media/mediamtx.yml
+    dest: "{{ cloudtak_dir }}/media/mediamtx.yml"
+    mode: '0644'
+  tags:
+    - cloudtak
+
+- name: Ensure tasks/pmtiles directory exists
+  ansible.builtin.file:
+    path: "{{ cloudtak_dir }}/tasks/pmtiles"
+    state: directory
+    mode: '0755'
+  tags:
+    - cloudtak
+
+- name: Copy pmtiles Dockerfile.compose
+  ansible.builtin.copy:
+    src: tasks/pmtiles/Dockerfile.compose
+    dest: "{{ cloudtak_dir }}/tasks/pmtiles/Dockerfile.compose"
+    mode: '0644'
+  tags:
+    - cloudtak
+
+- name: Check if .env file exists
+  ansible.builtin.stat:
+    path: "{{ cloudtak_dir }}/.env"
+  register: env_file_exists
+  tags:
+    - cloudtak
+
+- name: Create .env file from example if it doesn't exist
+  ansible.builtin.copy:
+    src: "{{ cloudtak_dir }}/.env.example"
+    dest: "{{ cloudtak_dir }}/.env"
+    remote_src: yes
+    mode: '0644'
+  when: not env_file_exists.stat.exists
+  tags:
+    - cloudtak
+
+- name: Verify deployment
+  ansible.builtin.shell:
+    cmd: |
+      ls -lh {{ cloudtak_dir }}/docker-compose.yml
+      echo ""
+      echo "Port mappings in docker-compose.yml:"
+      grep -E "0\.0\.0\.0:[0-9]+:[0-9]+|:[0-9]+:[0-9]+" {{ cloudtak_dir }}/docker-compose.yml | head -10
+  register: cloudtak_verify
+  changed_when: false
+  tags:
+    - cloudtak
+
+- name: Display deployment verification
+  ansible.builtin.debug:
+    msg: "{{ cloudtak_verify.stdout_lines }}"
+  tags:
+    - cloudtak
+
+- name: Build CloudTAK services
+  ansible.builtin.shell:
+    cmd: docker compose build
+    chdir: "{{ cloudtak_dir }}"
+  register: cloudtak_build
+  tags:
+    - cloudtak
+    - cloudtak-build
+
+- name: Display build output
+  ansible.builtin.debug:
+    msg: "{{ cloudtak_build.stdout_lines }}"
+  tags:
+    - cloudtak
+    - cloudtak-build
+
+- name: Start CloudTAK services
+  ansible.builtin.shell:
+    cmd: docker compose up -d
+    chdir: "{{ cloudtak_dir }}"
+  register: cloudtak_start
+  tags:
+    - cloudtak
+    - cloudtak-start
+
+- name: Display start output
+  ansible.builtin.debug:
+    msg: "{{ cloudtak_start.stdout_lines }}"
+  tags:
+    - cloudtak
+    - cloudtak-start
+
+- name: Check CloudTAK service status
+  ansible.builtin.shell:
+    cmd: docker compose ps
+    chdir: "{{ cloudtak_dir }}"
+  register: cloudtak_status
+  changed_when: false
+  tags:
+    - cloudtak
+    - cloudtak-start
+
+- name: Display service status
+  ansible.builtin.debug:
+    msg: "{{ cloudtak_status.stdout_lines }}"
+  tags:
+    - cloudtak
+    - cloudtak-start
+

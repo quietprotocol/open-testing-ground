@@ -1,0 +1,41 @@
+# MediaMTX configuration for CloudTAK
+# This replaces media-infra with plain MediaMTX configured for CloudTAK authentication
+
+# API server (for management)
+api: yes
+apiAddress: :9997
+
+# Protocols
+rtspTransports: [udp, tcp]
+rtspAddress: :8554
+rtspsAddress: :8322
+rtmpAddress: :1935
+hlsAddress: :8888
+webrtcAddress: :8889
+srtAddress: :8890
+
+# Paths configuration
+# Allow dynamic path creation via API
+paths:
+  all:
+    # Allow publishing and reading
+    publishUser: ""
+    publishPass: ""
+    readUser: ""
+    readPass: ""
+    
+    # Enable all protocols
+    source: publisher
+    
+    # Recording
+    record: no
+
+# Logging
+logLevel: info
+logDestinations: [stdout]
+logFile: ""
+
+# Metrics
+metrics: yes
+metricsAddress: :9998
+

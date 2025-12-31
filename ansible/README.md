@@ -31,6 +31,7 @@ The Ansible setup provides:
    ansible-playbook playbooks/site.yml --tags gps
    ansible-playbook playbooks/site.yml --tags govtak
    ansible-playbook playbooks/site.yml --tags ots
+   ansible-playbook playbooks/site.yml --tags cloudtak
    ```
 
 ## Directory Structure
@@ -52,6 +53,7 @@ ansible/
 │   ├── opentakserver.yml    # OpenTAKServer deployment
 │   └── openmanet-image.yml  # OpenWrt firmware build
 └── roles/                   # Ansible roles
+    ├── cloudtak/           # CloudTAK deployment role
     ├── govtak/              # GovTAK Server role
     ├── docker/               # Docker role
     ├── gps/                 # GPS role
@@ -60,7 +62,8 @@ ansible/
     ├── opentakserver-dted/  # OpenTAKServer DTED upload role
     ├── opentakserver-packages/  # OpenTAKServer packages upload role
     ├── opentakserver-users/  # OpenTAKServer user creation role
-    └── openmanet-image/     # OpenWrt build role
+    ├── openmanet-image/     # OpenWrt build role
+    └── usbc-gadget/         # USB-C gadget mode role
 ```
 
 ## Inventory Configuration
@@ -86,6 +89,7 @@ all:
 
 Each role has its own documentation. See the README.md file in each role directory for detailed information:
 
+- **[cloudtak](roles/cloudtak/README.md)** - Deploys CloudTAK, a browser-based TAK client and ETL tool
 - **[docker](roles/docker/README.md)** - Configures Docker storage driver and data directory on OpenWrt devices
 - **[gps](roles/gps/README.md)** - Configures GPS initialization for WM1302 Pi Hat with Quectel L76K GNSS module
 - **[gps-reset](roles/gps-reset/README.md)** - Removes GPS initialization configuration and puts the GPS module into standby mode
@@ -95,6 +99,7 @@ Each role has its own documentation. See the README.md file in each role directo
 - **[opentakserver-packages](roles/opentakserver-packages/README.md)** - Uploads ATAK plugin APK files from GitHub releases to OpenTAKServer
 - **[opentakserver-users](roles/opentakserver-users/README.md)** - Creates users in OpenTAKServer using the API
 - **[openmanet-image](roles/openmanet-image/README.md)** - Complete OpenWrt firmware build workflow
+- **[usbc-gadget](roles/usbc-gadget/README.md)** - Configures USB-C gadget mode for connecting EUDs to the mesh network
 
 ## Ad-Hoc Commands
 

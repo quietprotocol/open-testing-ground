@@ -1,0 +1,12 @@
+---
+# Default variables for cloudtak role
+
+# Directory where CloudTAK will be deployed
+cloudtak_dir: ~/cloudtak
+
+# Git version/branch to checkout (default: main)
+cloudtak_version: main
+
+# Whether to backup existing compose files before overwriting
+compose_backup: true
+

@@ -1,0 +1,26 @@
+FROM node:24-slim
+
+EXPOSE 5002
+
+ENV HOME=/home/etl
+WORKDIR $HOME
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR $HOME/tiles
+
+ADD package.json ./
+ADD package-lock.json ./
+
+RUN npm install
+
+COPY ./ $HOME/tiles
+
+# Debian/glibc base image is compatible with @mapbox/vtquery native module
+
+RUN npm run lint \
+    && npm run build
+
+CMD ["npm", "run", "prod"]

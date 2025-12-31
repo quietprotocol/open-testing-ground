@@ -15,6 +15,7 @@
     - ots
     - openwrt
     - usbc-gadget
+    - cloudtak
   
   tasks:
     - name: Include docker role
@@ -61,6 +62,12 @@
         name: usbc-gadget
       tags:
         - usbc-gadget
+
+    - name: Include cloudtak role
+      include_role:
+        name: cloudtak
+      tags:
+        - cloudtak
 
 - name: Deploy OpenWrt Docker Diffconfig to Build Server
   hosts: localhost
