@@ -70,7 +70,6 @@ CloudTAK deploys the following Docker services:
 The role deploys custom files from `files/` directory:
 
 - `docker-compose.yml`: Main Docker Compose configuration
-- `api/Dockerfile`: Custom API service Dockerfile
 - `media/mediamtx.yml`: MediaMTX configuration
 - `tasks/pmtiles/Dockerfile.compose`: PMTiles service Dockerfile
 
