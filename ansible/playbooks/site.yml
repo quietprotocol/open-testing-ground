@@ -15,7 +15,6 @@
     - ots
     - openwrt
     - usbc-gadget
-    - cloudtak
   
   tasks:
     - name: Include docker role
@@ -63,6 +62,14 @@
       tags:
         - usbc-gadget
 
+- name: Deploy CloudTAK on Gateway
+  hosts: gateway
+  gather_facts: no
+  become: no
+  tags:
+    - cloudtak
+  
+  tasks:
     - name: Include cloudtak role
       include_role:
         name: cloudtak
