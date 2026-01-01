@@ -12,6 +12,12 @@ services:
             - store
         ports:
             - "5000:5000"
+        healthcheck:
+            test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5001/api"]
+            interval: 5s
+            timeout: 3s
+            retries: 10
+            start_period: 10s
         environment:
             - CLOUDTAK_Mode=${CLOUDTAK_Mode}
             - CLOUDTAK_Config_media_url=${CLOUDTAK_Config_media_url}
@@ -47,13 +53,15 @@ services:
           network: host
         restart: 'always'
         depends_on:
-            - api
-            - store
+            api:
+                condition: service_healthy
+            store:
+                condition: service_started
         ports:
             - "5003:5003"
         environment:
             - CLOUDTAK_Mode=${CLOUDTAK_Mode}
-            - API_URL=${API_URL}
+            - API_URL=http://api:5001
             - SigningSecret=${SigningSecret}
             - ASSET_BUCKET=${ASSET_BUCKET}
             - AWS_S3_Endpoint=${AWS_S3_Endpoint}

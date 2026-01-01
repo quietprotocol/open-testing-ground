@@ -107,6 +107,15 @@
   tags:
     - cloudtak
 
+- name: Copy .env.example from role files if repository version doesn't exist
+  ansible.builtin.copy:
+    src: .env.example
+    dest: "{{ cloudtak_dir }}/.env.example"
+    mode: '0644'
+  when: not env_file_exists.stat.exists
+  tags:
+    - cloudtak
+
 - name: Create .env file from example if it doesn't exist
   ansible.builtin.copy:
     src: "{{ cloudtak_dir }}/.env.example"
