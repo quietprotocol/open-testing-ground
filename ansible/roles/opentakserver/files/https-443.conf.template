@@ -4,7 +4,14 @@
 #******************************************************
 server {
     listen 443 ssl;
-    server_name _;
+    # Only accept requests for the domain name, not IP addresses
+    # This ensures certificates work properly
+    server_name ots.marmal.duckdns.org *.marmal.duckdns.org;
+    
+    # Reject requests to IP addresses on HTTPS (certificate won't match)
+    if ($host ~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$) {
+        return 444;
+    }
 
     resolver 127.0.0.11 valid=10s;
     resolver_timeout 5s;

@@ -4,7 +4,13 @@
 #******************************************************
 server {
     listen 80;
-    server_name _;
+    # Only accept requests for the domain name, not IP addresses
+    server_name ots.marmal.duckdns.org *.marmal.duckdns.org;
+    
+    # Reject requests to IP addresses
+    if ($host ~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$) {
+        return 444;
+    }
 
     resolver 127.0.0.11 valid=10s;
     resolver_timeout 5s;
@@ -24,9 +30,9 @@ server {
     #******************************************************
     #       OpenTakServer WebUI
     #******************************************************
+    # Redirect HTTP to HTTPS
     location / {
-        include includes.d/proxy_params;
-        proxy_pass http://${WEBUI_ADDRESS};
+        return 301 https://$host:8440$request_uri;
     }
 
     #******************************************************
