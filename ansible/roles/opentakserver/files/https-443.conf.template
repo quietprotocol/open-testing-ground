@@ -62,6 +62,9 @@ server {
         proxy_buffering off;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
+        # Override Origin header to remove port for CORS compatibility
+        # This fixes socket.io POST requests when using non-default ports (e.g., 8440 instead of 443)
+        proxy_set_header Origin "https://$host";
         proxy_pass http://${OTS_ADDRESS}/socket.io;
     }
 

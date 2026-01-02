@@ -5,6 +5,17 @@
 !.env.example
 !**/.env.example
 
+# SSL Certificates and keys (never commit these)
+*.key
+*.pem
+*.cer
+*.crt
+*.p12
+*.pfx
+*.csr
+**/certs/**
+**/ca/**
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -2,19 +2,12 @@
 # Main playbook for OpenMANET gateway deployment
 # Usage: ansible-playbook playbooks/site.yml
 
-- name: Deploy OpenMANET Gateway Configuration
+- name: Deploy Docker on Gateway
   hosts: openmanet_devices
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tags:
-    - gateway
     - docker
-    - gps
-    - gps-reset
-    - govtak
-    - ots
-    - openwrt
-    - usbc-gadget
   
   tasks:
     - name: Include docker role
@@ -23,18 +16,42 @@
       tags:
         - docker
 
+- name: Deploy GPS on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - gps
+  
+  tasks:
     - name: Include gps role
       include_role:
         name: gps
       tags:
         - gps
 
+- name: Reset GPS on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - gps-reset
+  
+  tasks:
     - name: Include gps-reset role
       include_role:
         name: gps-reset
       tags:
         - gps-reset
 
+- name: Deploy GovTAK on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - govtak
+  
+  tasks:
     - name: Include govtak role
       include_role:
         name: govtak
@@ -43,12 +60,29 @@
         - govtak-certs
         - govtak-setup
 
+- name: Deploy OpenTAKServer on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - ots
+  
+  tasks:
     - name: Include opentakserver role
       include_role:
         name: opentakserver
       tags:
         - ots
+        - ots-certs
 
+- name: Deploy OpenWrt Image on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - openwrt
+  
+  tasks:
     - name: Include openwrt role
       include_role:
         name: openmanet-image
@@ -56,6 +90,14 @@
         - openwrt
         - openwrt-flash
 
+- name: Deploy USB-C Gadget on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - usbc-gadget
+  
+  tasks:
     - name: Include usbc-gadget role
       include_role:
         name: usbc-gadget
@@ -64,8 +106,8 @@
 
 - name: Deploy CloudTAK on Gateway
   hosts: gateway
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tags:
     - cloudtak
   
@@ -78,8 +120,8 @@
 
 - name: Deploy OpenWrt Docker Diffconfig to Build Server
   hosts: localhost
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tags:
     - openwrt
     - openwrt-build
@@ -93,8 +135,8 @@
 
 - name: Upload DTED files to OpenTAKServer
   hosts: openmanet_devices
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tags:
     - ots-dted
   
@@ -107,8 +149,8 @@
 
 - name: Upload ATAK packages to OpenTAKServer
   hosts: openmanet_devices
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tags:
     - ots-packages
   
@@ -121,8 +163,8 @@
 
 - name: Create users in OpenTAKServer
   hosts: openmanet_devices
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tags:
     - ots-users
   

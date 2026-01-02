@@ -4,3 +4,16 @@
 opentakserver_dir: ~/ots-docker
 compose_backup: true
 
+# SSL Certificate configuration
+# Local path to certificates on Ansible control machine
+ots_cert_local_path: ~/.acme.sh/*.marmal.duckdns.org_ecc
+
+# Certificate file names (relative to ots_cert_local_path)
+ots_cert_fullchain: fullchain.cer
+ots_cert_key: "*.marmal.duckdns.org.key"
+ots_cert_ca: ca.cer
+
+# Remote path where certificates will be stored on the target host
+# This path is relative to opentakserver_dir
+ots_cert_remote_path: persistent/ots/ca
+

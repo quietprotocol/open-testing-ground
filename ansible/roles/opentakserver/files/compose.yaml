@@ -87,6 +87,7 @@ services:
     volumes:
       - "./persistent/ots/ca:/app/ots/ca:ro"
       - "./persistent/nginx/templates:/etc/nginx/templates:ro"
+      - "./persistent/nginx/includes:/etc/nginx/includes.d:ro"
     depends_on:
       ots:
         condition: service_healthy

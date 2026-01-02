@@ -8,6 +8,7 @@
     mode: '0755'
   tags:
     - ots
+    - ots-certs
 
 - name: Check if persistent directory exists
   ansible.builtin.stat:
@@ -82,6 +83,100 @@
     mode: '0755'
   tags:
     - ots
+    - ots-certs
+
+- name: Ensure nginx templates includes.d directory exists
+  ansible.builtin.file:
+    path: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d"
+    state: directory
+    mode: '0755'
+  tags:
+    - ots
+    - ots-certs
+
+- name: Ensure nginx includes directory exists
+  ansible.builtin.file:
+    path: "{{ opentakserver_dir }}/persistent/nginx/includes"
+    state: directory
+    mode: '0755'
+  tags:
+    - ots
+    - ots-certs
+
+- name: Copy nginx certificate include file to templates
+  ansible.builtin.copy:
+    src: includes.d/opentakserver_certificate
+    dest: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d/opentakserver_certificate"
+    mode: '0644'
+  tags:
+    - ots
+    - ots-certs
+
+- name: Copy nginx certificate include file to includes (runtime)
+  ansible.builtin.copy:
+    src: includes.d/opentakserver_certificate
+    dest: "{{ opentakserver_dir }}/persistent/nginx/includes/opentakserver_certificate"
+    mode: '0644'
+  tags:
+    - ots
+    - ots-certs
+
+- name: Ensure certificate directory exists on remote host
+  ansible.builtin.file:
+    path: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}"
+    state: directory
+    mode: '0755'
+  tags:
+    - ots
+    - ots-certs
+
+- name: Expand local certificate path
+  ansible.builtin.set_fact:
+    expanded_cert_path: "{{ ots_cert_local_path | expanduser }}"
+  delegate_to: localhost
+  tags:
+    - ots
+    - ots-certs
+
+- name: Find certificate files on local machine
+  ansible.builtin.find:
+    paths: "{{ expanded_cert_path }}"
+    patterns:
+      - "{{ ots_cert_fullchain }}"
+      - "{{ ots_cert_key }}"
+      - "{{ ots_cert_ca }}"
+    recurse: false
+  register: local_cert_files
+  delegate_to: localhost
+  tags:
+    - ots
+    - ots-certs
+
+- name: Copy certificate files to remote host
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key')) }}"
+    mode: '{{ "0600" if ".key" in item.path else "0644" }}'
+    remote_src: false
+  loop: "{{ local_cert_files.files | default([]) }}"
+  when: local_cert_files.files is defined and local_cert_files.files | length > 0
+  tags:
+    - ots
+    - ots-certs
+
+- name: Display certificate deployment summary
+  ansible.builtin.debug:
+    msg: |
+      Certificates deployed to: {{ opentakserver_dir }}/{{ ots_cert_remote_path }}
+      Files copied: {{ local_cert_files.files | default([]) | length }}
+      Certificate files:
+      {% for file in local_cert_files.files | default([]) %}
+      - {{ file.path | basename }} (mode: {{ "0600" if "key" in file.path else "0644" }})
+      {% endfor %}
+  when: local_cert_files.files is defined and local_cert_files.files | length > 0
+  tags:
+    - ots
+    - ots-certs
 
 - name: Copy fixed nginx http-80.conf.template
   ansible.builtin.copy:
