@@ -55,6 +55,7 @@ server {
     #******************************************************
     location /api {
         include includes.d/proxy_params;
+        proxy_set_header Referer $scheme://$host/;
         proxy_pass http://${OTS_ADDRESS};
     }
 
