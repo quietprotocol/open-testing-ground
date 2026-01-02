@@ -88,6 +88,9 @@ services:
       - "./persistent/ots/ca:/app/ots/ca:ro"
       - "./persistent/nginx/templates:/etc/nginx/templates:ro"
       - "./persistent/nginx/includes:/etc/nginx/includes.d:ro"
+    networks:
+      - default
+      - cloudtak_default
     depends_on:
       ots:
         condition: service_healthy
@@ -165,3 +168,7 @@ services:
     depends_on:
       ots:
         condition: service_healthy
+
+networks:
+  cloudtak_default:
+    external: true

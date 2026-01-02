@@ -88,3 +88,44 @@ server {
     }
 
 }
+
+#******************************************************
+#   CloudTAK
+#   Port: 443 (HTTPS)
+#******************************************************
+server {
+    listen 443 ssl;
+    server_name cloudtak.marmal.duckdns.org;
+    
+    # Reject requests to IP addresses on HTTPS (certificate won't match)
+    if ($host ~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$) {
+        return 444;
+    }
+
+    resolver 127.0.0.11 valid=10s;
+    resolver_timeout 5s;
+
+    client_max_body_size ${CLIENT_MAX_BODY_SIZE};
+
+    # OpenTakServer certificates (shared wildcard cert)
+    include includes.d/opentakserver_certificate;
+
+    #******************************************************
+    #       CloudTAK Web UI
+    #******************************************************
+    location / {
+        proxy_pass http://api:5000;
+        proxy_ssl_verify off;
+        proxy_ssl_session_reuse on;
+        proxy_buffering off;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        #proxy_hide_header Authorization;
+        #proxy_set_header Referer '';
+        #proxy_set_header Origin '';
+    }
+}
