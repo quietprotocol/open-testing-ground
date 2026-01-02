@@ -1,9 +1,8 @@
 services:
     api:
         dns_search: []
-        extra_hosts:
-            - "cloudtak.marmal.duckdns.org:192.168.70.92"
-            - "ots.marmal.duckdns.org:192.168.70.92"
+        dns:
+            - "${DNS_SERVER:-192.168.0.1}"
         build:
           context: ./api/
           dockerfile: Dockerfile
