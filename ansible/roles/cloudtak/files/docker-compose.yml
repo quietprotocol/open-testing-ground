@@ -3,6 +3,7 @@ services:
         dns_search: []
         extra_hosts:
             - "cloudtak.marmal.duckdns.org:192.168.70.92"
+            - "ots.marmal.duckdns.org:192.168.70.92"
         build:
           context: ./api/
           dockerfile: Dockerfile
