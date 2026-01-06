@@ -1,9 +1,9 @@
 ---
 # OpenWrt Complete Build Role
 # This role handles the complete OpenWrt build process:
-# 1. Clone OpenMANET/openwrt repository
+# 1. Clone OpenMANET firmware repository
 # 2. Checkout specified branch
-# 3. Run morse_setup.sh to initialize build environment
+# 3. Run openmanet_setup.sh to initialize build environment
 # 4. Apply docker_diffconfig
 # 5. Download sources
 # 6. Build the firmware image
@@ -113,7 +113,7 @@
     - openwrt
     - openwrt-clone
 
-- name: Clone OpenMANET OpenWrt repository
+- name: Clone OpenMANET firmware repository
   ansible.builtin.git:
     repo: "{{ openwrt_repo_url }}"
     dest: "{{ openwrt_repo_dir }}"
@@ -142,33 +142,33 @@
     - openwrt-clone
 
 # ============================================================================
-# Initialize Build Environment (morse_setup.sh)
+# Initialize Build Environment (openmanet_setup.sh)
 # ============================================================================
 
-- name: Check if morse_setup.sh exists
+- name: Check if openmanet_setup.sh exists
   ansible.builtin.stat:
-    path: "{{ openwrt_repo_dir }}scripts/morse_setup.sh"
+    path: "{{ openwrt_repo_dir }}scripts/openmanet_setup.sh"
   delegate_to: "{{ openwrt_build_server }}"
-  register: morse_setup_exists
+  register: openmanet_setup_exists
   tags:
     - openwrt
     - openwrt-setup
     - morse
 
-- name: Run morse_setup.sh to initialize build environment
+- name: Run openmanet_setup.sh to initialize build environment
   ansible.builtin.command:
-    cmd: ./scripts/morse_setup.sh -i -b {{ openwrt_build_config }}
+    cmd: ./scripts/openmanet_setup.sh -i -b {{ openwrt_build_config }}
     chdir: "{{ openwrt_repo_dir }}"
     creates: "{{ openwrt_repo_dir }}.config"
   delegate_to: "{{ openwrt_build_server }}"
   become: false
-  when: morse_setup_exists.stat.exists
+  when: openmanet_setup_exists.stat.exists
   tags:
     - openwrt
     - openwrt-setup
     - morse
 
-- name: Verify morse_setup.sh completed successfully
+- name: Verify openmanet_setup.sh completed successfully
   ansible.builtin.stat:
     path: "{{ openwrt_repo_dir }}.config"
   delegate_to: "{{ openwrt_build_server }}"
@@ -180,8 +180,8 @@
 
 - name: Fail if .config was not created
   ansible.builtin.fail:
-    msg: "morse_setup.sh failed - .config file not found"
-  when: not config_exists.stat.exists and morse_setup_exists.stat.exists
+    msg: "openmanet_setup.sh failed - .config file not found"
+  when: not config_exists.stat.exists and openmanet_setup_exists.stat.exists
   tags:
     - openwrt
     - openwrt-setup

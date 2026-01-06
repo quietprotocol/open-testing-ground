@@ -198,5 +198,5 @@ ansible openmanet_devices -m shell -a "sudo whoami" --become
 ## References
 
 - [Ansible Documentation](https://docs.ansible.com/)
-- [OpenMANET OpenWrt Repository](https://github.com/OpenMANET/openwrt)
+- [OpenMANET Firmware Repository](https://github.com/OpenMANET/firmware)
 - [OpenMANET Documentation](https://openmanet.github.io/docs/)

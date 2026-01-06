@@ -3,9 +3,9 @@
 # Usage: ansible-playbook playbooks/openmanet-image.yml
 #
 # This playbook performs a complete OpenWrt firmware build:
-# 1. Clones OpenMANET/openwrt repository
+# 1. Clones OpenMANET/firmware repository
 # 2. Checks out specified branch
-# 3. Initializes build environment with morse_setup.sh
+# 3. Initializes build environment with openmanet_setup.sh
 # 4. Applies docker_diffconfig for Docker support
 # 5. Downloads all required sources
 # 6. Builds the firmware image

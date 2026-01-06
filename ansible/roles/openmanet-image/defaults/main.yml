@@ -9,15 +9,15 @@
 openwrt_build_server: "{{ build_server_host | default('localhost') }}"
 openwrt_build_user: "{{ build_server_user | default('ubuntu') }}"
 openwrt_build_ssh_key: "{{ build_ssh_key | default('~/.ssh/id_rsa_proxmox_vms') }}"
-openwrt_build_path: "{{ build_server_path | default('/home/ubuntu/source/openwrt/') }}"
+openwrt_build_path: "{{ build_server_path | default('/home/ubuntu/source/firmware/') }}"
 
 # Repository configuration
-openwrt_repo_url: "https://github.com/OpenMANET/openwrt.git"
-openwrt_repo_branch: "release-1.5"  # Can be overridden: release-1.5, release-1.4.1, mm/v23.05.5, etc.
+openwrt_repo_url: "https://github.com/OpenMANET/firmware.git"
+openwrt_repo_branch: "24.10"  # Can be overridden: 24.10, 1.6.0-RC2, release-1.5, etc.
 openwrt_repo_dir: "{{ openwrt_build_path }}"
 
 # Build configuration
-openwrt_build_config: "ekh01"  # Morse setup build config identifier
+openwrt_build_config: "ekh-bcm2711"  # Board identifier (e.g., ekh-bcm2711 for RPi4, ekh-bcm2710 for RPi3)
 openwrt_build_jobs: "16"  # Number of parallel build jobs (-jN) - default 16 cores
 openwrt_build_verbose: "sc"  # Verbose level: sc, 1, 0
 

@@ -9,10 +9,10 @@
 #
 
 # Root filesystem partition size (in MiB)
-# Set to 60GB (61440 MiB) for Docker containers
-# This leaves ~64MB for boot partition and ~3.5GB unallocated on a 64GB SD card
+# Set to 62GB (63488 MiB) for Docker containers
+# This leaves ~64MB for boot partition and ~1.5GB unallocated on a 64GB SD card
 # Adjust based on your SD card size and needs
-CONFIG_TARGET_ROOTFS_PARTSIZE=61440
+CONFIG_TARGET_ROOTFS_PARTSIZE=63488
 
 #
 # Docker Utilities

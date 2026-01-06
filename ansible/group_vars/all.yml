@@ -9,5 +9,5 @@ device_user: root
 build_server_host: openmanet.marmal.duckdns.org
 build_server_user: ubuntu
 build_ssh_key: ~/.ssh/id_rsa_proxmox_vms
-build_server_path: /home/ubuntu/source/openwrt/
+build_server_path: /home/ubuntu/source/firmware/
 
