@@ -21,9 +21,6 @@ openwrt_build_config: "ekh-bcm2711"  # Board identifier (e.g., ekh-bcm2711 for R
 openwrt_build_jobs: "16"  # Number of parallel build jobs (-jN) - default 16 cores
 openwrt_build_verbose: "sc"  # Verbose level: sc, 1, 0
 
-# Target path for docker_diffconfig on build server
-openwrt_diffconfig_path: "{{ openwrt_repo_dir }}boards/common/docker_diffconfig"
-
 # Local paths for build artifacts
 openwrt_local_artifacts_dir: "{{ playbook_dir }}/../../artifacts/openwrt"
 openwrt_local_build_log: "{{ openwrt_local_artifacts_dir }}/build.log"

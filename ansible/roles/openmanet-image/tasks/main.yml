@@ -19,17 +19,17 @@
 # Setup and Validation
 # ============================================================================
 
-- name: Ensure docker_diffconfig file exists locally
+- name: Ensure z-docker_diffconfig file exists locally
   ansible.builtin.stat:
-    path: "{{ role_path }}/files/docker_diffconfig"
+    path: "{{ role_path }}/files/z-docker_diffconfig"
   register: diffconfig_file_stat
   tags:
     - openwrt
     - openwrt-setup
 
-- name: Fail if docker_diffconfig file is missing
+- name: Fail if z-docker_diffconfig file is missing
   ansible.builtin.fail:
-    msg: "docker_diffconfig file not found in role files directory"
+    msg: "z-docker_diffconfig file not found in role files directory"
   when: not diffconfig_file_stat.stat.exists
   tags:
     - openwrt
@@ -142,6 +142,59 @@
     - openwrt-clone
 
 # ============================================================================
+# Setup Docker Diffconfig (BEFORE openmanet_setup.sh so it's picked up automatically)
+# ============================================================================
+# z- prefix ensures it's applied after target_diffconfig alphabetically
+
+- name: Ensure boards/common directory exists on build server
+  ansible.builtin.file:
+    path: "{{ openwrt_repo_dir }}boards/common"
+    state: directory
+    mode: '0755'
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+    - openwrt-setup
+    - openwrt-diffconfig
+
+- name: Copy z-docker_diffconfig to common directory
+  ansible.builtin.copy:
+    src: z-docker_diffconfig
+    dest: "{{ openwrt_repo_dir }}boards/common/z-docker_diffconfig"
+    mode: '0644'
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+    - openwrt-setup
+    - openwrt-diffconfig
+
+- name: Ensure board directory exists on build server
+  ansible.builtin.file:
+    path: "{{ openwrt_repo_dir }}boards/{{ openwrt_build_config }}"
+    state: directory
+    mode: '0755'
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+    - openwrt-setup
+    - openwrt-diffconfig
+
+- name: Create symlink to z-docker_diffconfig in board directory
+  ansible.builtin.file:
+    src: "../common/z-docker_diffconfig"
+    dest: "{{ openwrt_repo_dir }}boards/{{ openwrt_build_config }}/z-docker_diffconfig"
+    state: link
+  delegate_to: "{{ openwrt_build_server }}"
+  become: false
+  tags:
+    - openwrt
+    - openwrt-setup
+    - openwrt-diffconfig
+
+# ============================================================================
 # Initialize Build Environment (openmanet_setup.sh)
 # ============================================================================
 
@@ -153,7 +206,6 @@
   tags:
     - openwrt
     - openwrt-setup
-    - morse
 
 - name: Run openmanet_setup.sh to initialize build environment
   ansible.builtin.command:
@@ -166,7 +218,6 @@
   tags:
     - openwrt
     - openwrt-setup
-    - morse
 
 - name: Verify openmanet_setup.sh completed successfully
   ansible.builtin.stat:
@@ -176,7 +227,6 @@
   tags:
     - openwrt
     - openwrt-setup
-    - morse
 
 - name: Fail if .config was not created
   ansible.builtin.fail:
@@ -185,45 +235,6 @@
   tags:
     - openwrt
     - openwrt-setup
-    - morse
-
-# ============================================================================
-# Apply Docker Diffconfig
-# ============================================================================
-
-- name: Ensure boards/common directory exists on build server
-  ansible.builtin.file:
-    path: "{{ openwrt_repo_dir }}boards/common"
-    state: directory
-    mode: '0755'
-  delegate_to: "{{ openwrt_build_server }}"
-  become: false
-  tags:
-    - openwrt
-    - openwrt-diffconfig
-
-- name: Copy docker_diffconfig to build server
-  ansible.builtin.copy:
-    src: docker_diffconfig
-    dest: "{{ openwrt_diffconfig_path }}"
-    mode: '0644'
-  delegate_to: "{{ openwrt_build_server }}"
-  become: false
-  tags:
-    - openwrt
-    - openwrt-diffconfig
-
-- name: Apply docker_diffconfig to build configuration
-  ansible.builtin.shell:
-    cmd: |
-      cat {{ openwrt_diffconfig_path }} >> .config
-      make defconfig
-    chdir: "{{ openwrt_repo_dir }}"
-  delegate_to: "{{ openwrt_build_server }}"
-  become: false
-  tags:
-    - openwrt
-    - openwrt-diffconfig
 
 - name: Verify docker_diffconfig was applied
   ansible.builtin.command:
