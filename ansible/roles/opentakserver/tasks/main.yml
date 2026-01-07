@@ -1,6 +1,16 @@
 ---
 # OpenTAKServer deployment role
 
+- name: Install required packages for OpenTAKServer
+  ansible.builtin.shell: |
+    opkg update
+    opkg install git-http git openssh-client bash unzip coreutils-sha1sum htop || true
+  args:
+    creates: /usr/bin/git
+  tags:
+    - ots
+    - ots-setup
+
 - name: Ensure OpenTAKServer directory exists
   ansible.builtin.file:
     path: "{{ opentakserver_dir }}"

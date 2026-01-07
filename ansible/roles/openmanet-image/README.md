@@ -139,7 +139,7 @@ ansible-playbook playbooks/site.yml --tags openwrt-flash --limit gateway \
 - Settings are preserved by default (`openwrt_flash_keep_settings: true`)
 - Use `sysupgrade` compatible images (`.img.gz` files with `-sysupgrade` in the name)
 
-## Manual build
+## Manual build 1.6.0
 
 ```bash
 git clone https://github.com/OpenMANET/firmware.git
