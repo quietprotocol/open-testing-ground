@@ -2,9 +2,10 @@
 # Default variables for opentakserver-dted role
 
 # OpenTAKServer connection
-# Defaults to the current host's ansible_host or inventory_hostname
+# Defaults to the hostname (required because nginx rejects IP addresses)
 # Override in group_vars or host_vars to point to specific OpenTAKServer instance
-opentakserver_host: "{{ ansible_host | default(inventory_hostname) }}"
+# Note: nginx is configured to reject IP address requests, so hostname must be used
+opentakserver_host: "ots.marmal.duckdns.org"
 opentakserver_port: 8880
 opentakserver_username: administrator
 opentakserver_password: password
