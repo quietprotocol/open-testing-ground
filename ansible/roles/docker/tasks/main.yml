@@ -62,6 +62,7 @@
 
 - name: Configure Docker daemon via UCI
   ansible.builtin.shell: |
+    uci set dockerd.globals=globals
     uci set dockerd.globals.storage_driver="{{ docker_storage_driver }}"
     uci set dockerd.globals.data_root="{{ docker_data_root }}/"
     uci set dockerd.globals.log_level="debug"

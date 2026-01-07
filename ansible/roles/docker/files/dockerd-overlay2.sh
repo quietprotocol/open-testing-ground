@@ -48,6 +48,7 @@ fi
 
 # Configure Docker daemon via UCI (init script generates /tmp/dockerd/daemon.json from UCI)
 # All options are simple values, so UCI can handle them without needing a custom JSON file
+uci set dockerd.globals=globals
 uci set dockerd.globals.storage_driver="overlay2"
 uci set dockerd.globals.data_root="/opt/docker/"
 uci set dockerd.globals.log_level="debug"
