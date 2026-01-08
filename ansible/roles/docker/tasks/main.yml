@@ -174,10 +174,10 @@
   tags:
     - docker
 
-- name: Check if docker-buildx is already installed
+- name: Check if docker-buildx already exists
   ansible.builtin.stat:
     path: /usr/lib/docker/cli-plugins/docker-buildx
-  register: buildx_installed
+  register: buildx_exists
   tags:
     - docker
 
@@ -200,7 +200,7 @@
       exit 1
     fi
     chmod +x /usr/lib/docker/cli-plugins/docker-buildx
-  when: not buildx_installed.stat.exists
+  when: not buildx_exists.stat.exists
   tags:
     - docker
 
@@ -213,9 +213,9 @@
   tags:
     - docker
 
-- name: Display docker-buildx version
+- name: Display docker-buildx status
   ansible.builtin.debug:
-    msg: "docker-buildx installed: {{ buildx_version.stdout if buildx_version.rc == 0 else 'FAILED - check installation' }}"
+    msg: "docker-buildx: {{ buildx_version.stdout if buildx_version.rc == 0 else 'FAILED - check installation' }}"
   tags:
     - docker
 
