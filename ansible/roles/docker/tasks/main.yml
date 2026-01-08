@@ -146,3 +146,76 @@
   tags:
     - docker
 
+- name: Detect system architecture for docker-buildx
+  ansible.builtin.shell: |
+    arch=$(uname -m)
+    # Map to buildx architecture names
+    if echo "$arch" | grep -qi "aarch64"; then
+      echo "linux-arm64"
+    elif echo "$arch" | grep -qi "armv7\|armhf"; then
+      echo "linux-arm-v7"
+    elif echo "$arch" | grep -qi "x86_64\|amd64"; then
+      echo "linux-amd64"
+    elif echo "$arch" | grep -qi "arm"; then
+      echo "linux-arm-v7"
+    else
+      echo "linux-arm64"
+    fi
+  register: buildx_arch
+  changed_when: false
+  tags:
+    - docker
+
+- name: Ensure Docker CLI plugins directory exists
+  ansible.builtin.file:
+    path: /usr/lib/docker/cli-plugins
+    state: directory
+    mode: '0755'
+  tags:
+    - docker
+
+- name: Check if docker-buildx is already installed
+  ansible.builtin.stat:
+    path: /usr/lib/docker/cli-plugins/docker-buildx
+  register: buildx_installed
+  tags:
+    - docker
+
+- name: Download and install docker-buildx
+  ansible.builtin.shell: |
+    # Use version compatible with docker-compose 2.39.1 (v0.25.0)
+    BUILDX_VERSION="v0.25.0"
+    # Download buildx binary
+    if command -v wget >/dev/null 2>&1; then
+      wget -q "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.{{ buildx_arch.stdout }}" -O /usr/lib/docker/cli-plugins/docker-buildx || exit 1
+    elif command -v curl >/dev/null 2>&1; then
+      curl -sLf "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.{{ buildx_arch.stdout }}" -o /usr/lib/docker/cli-plugins/docker-buildx || exit 1
+    else
+      echo "ERROR: Neither wget nor curl available" >&2
+      exit 1
+    fi
+    # Verify download succeeded
+    if [ ! -f /usr/lib/docker/cli-plugins/docker-buildx ] || [ ! -s /usr/lib/docker/cli-plugins/docker-buildx ]; then
+      echo "ERROR: Download failed or file is empty" >&2
+      exit 1
+    fi
+    chmod +x /usr/lib/docker/cli-plugins/docker-buildx
+  when: not buildx_installed.stat.exists
+  tags:
+    - docker
+
+- name: Verify docker-buildx installation
+  ansible.builtin.command:
+    cmd: docker buildx version
+  register: buildx_version
+  changed_when: false
+  failed_when: false
+  tags:
+    - docker
+
+- name: Display docker-buildx version
+  ansible.builtin.debug:
+    msg: "docker-buildx installed: {{ buildx_version.stdout if buildx_version.rc == 0 else 'FAILED - check installation' }}"
+  tags:
+    - docker
+
