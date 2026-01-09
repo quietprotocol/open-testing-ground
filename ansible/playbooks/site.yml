@@ -64,16 +64,11 @@
   hosts: openmanet_devices
   gather_facts: false
   become: false
-  tags:
-    - ots
   
   tasks:
-    - name: Include opentakserver role
-      include_role:
+    - name: Import opentakserver role
+      import_role:
         name: opentakserver
-      tags:
-        - ots
-        - ots-certs
 
 - name: Deploy OpenWrt Image on Gateway
   hosts: openmanet_devices

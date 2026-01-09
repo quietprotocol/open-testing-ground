@@ -4,12 +4,11 @@
 - name: Install required packages for OpenTAKServer
   ansible.builtin.shell: |
     opkg update
-    opkg install git-http git openssh-client bash unzip coreutils-sha1sum htop || true
+    opkg install git-http git openssh-client bash unzip coreutils-sha1sum htop ca-bundle || true
   args:
     creates: /usr/bin/git
   tags:
-    - ots
-    - ots-setup
+    - ots-clone
 
 - name: Ensure OpenTAKServer directory exists
   ansible.builtin.file:
@@ -17,22 +16,21 @@
     state: directory
     mode: '0755'
   tags:
-    - ots
-    - ots-certs
+    - ots-clone
 
 - name: Check if persistent directory exists
   ansible.builtin.stat:
     path: "{{ opentakserver_dir }}/persistent"
   register: persistent_dir_exists
   tags:
-    - ots
+    - ots-clone
 
 - name: Check if ots-docker repository exists
   ansible.builtin.stat:
     path: "{{ opentakserver_dir }}/.git"
   register: ots_repo_exists
   tags:
-    - ots
+    - ots-clone
 
 - name: Clone ots-docker repository
   ansible.builtin.git:
@@ -42,7 +40,7 @@
     force: yes
   when: not persistent_dir_exists.stat.exists
   tags:
-    - ots
+    - ots-clone
 
 - name: Update ots-docker repository
   ansible.builtin.git:
@@ -54,7 +52,7 @@
     - persistent_dir_exists.stat.exists
     - ots_repo_exists.stat.exists
   tags:
-    - ots
+    - ots-clone
 
 - name: Get timestamp for backup
   ansible.builtin.shell:
@@ -63,7 +61,7 @@
   changed_when: false
   when: compose_backup | default(true)
   tags:
-    - ots
+    - ots-push
 
 - name: Backup existing compose.yaml if it exists
   ansible.builtin.copy:
@@ -76,7 +74,7 @@
   ignore_errors: true
   changed_when: false
   tags:
-    - ots
+    - ots-push
 
 - name: Copy compose.yaml to device
   ansible.builtin.copy:
@@ -84,7 +82,7 @@
     dest: "{{ opentakserver_dir }}/compose.yaml"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
 
 - name: Ensure nginx templates directory exists
   ansible.builtin.file:
@@ -92,7 +90,7 @@
     state: directory
     mode: '0755'
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Ensure nginx templates includes.d directory exists
@@ -101,7 +99,7 @@
     state: directory
     mode: '0755'
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Ensure nginx includes directory exists
@@ -110,7 +108,7 @@
     state: directory
     mode: '0755'
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Copy nginx certificate include file to templates
@@ -119,7 +117,7 @@
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d/opentakserver_certificate"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Copy nginx certificate include file to includes (runtime)
@@ -128,7 +126,7 @@
     dest: "{{ opentakserver_dir }}/persistent/nginx/includes/opentakserver_certificate"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Ensure certificate directory exists on remote host
@@ -137,7 +135,7 @@
     state: directory
     mode: '0755'
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Expand local certificate path
@@ -145,7 +143,7 @@
     expanded_cert_path: "{{ ots_cert_local_path | expanduser }}"
   delegate_to: localhost
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Find certificate files on local machine
@@ -159,19 +157,19 @@
   register: local_cert_files
   delegate_to: localhost
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Copy certificate files to remote host
   ansible.builtin.copy:
     src: "{{ item.path }}"
-    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key')) }}"
+    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key') | regex_replace('^ca\\.cer$', 'ca.pem')) }}"
     mode: '{{ "0600" if ".key" in item.path else "0644" }}'
     remote_src: false
   loop: "{{ local_cert_files.files | default([]) }}"
   when: local_cert_files.files is defined and local_cert_files.files | length > 0
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Display certificate deployment summary
@@ -185,7 +183,7 @@
       {% endfor %}
   when: local_cert_files.files is defined and local_cert_files.files | length > 0
   tags:
-    - ots
+    - ots-push
     - ots-certs
 
 - name: Copy fixed nginx http-80.conf.template
@@ -194,7 +192,8 @@
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/http-80.conf.template"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
+    - ots-nginx
 
 - name: Copy fixed nginx https-443.conf.template
   ansible.builtin.copy:
@@ -202,7 +201,8 @@
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/https-443.conf.template"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
+    - ots-nginx
 
 - name: Copy fixed nginx https-8443.conf.template
   ansible.builtin.copy:
@@ -210,7 +210,8 @@
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/https-8443.conf.template"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
+    - ots-nginx
 
 - name: Copy fixed nginx https-8446.conf.template
   ansible.builtin.copy:
@@ -218,7 +219,8 @@
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/https-8446.conf.template"
     mode: '0644'
   tags:
-    - ots
+    - ots-push
+    - ots-nginx
 
 - name: Verify deployment
   ansible.builtin.shell:
@@ -230,13 +232,13 @@
   register: ots_verify
   changed_when: false
   tags:
-    - ots
+    - ots-push
 
 - name: Display deployment verification
   ansible.builtin.debug:
     msg: "{{ ots_verify.stdout_lines }}"
   tags:
-    - ots
+    - ots-push
 
 - name: Start OpenTAKServer services
   ansible.builtin.shell:
@@ -244,15 +246,13 @@
     chdir: "{{ opentakserver_dir }}"
   register: ots_start
   tags:
-    - ots
-    - ots-start
+    - ots-build
 
 - name: Display start output
   ansible.builtin.debug:
     msg: "{{ ots_start.stdout_lines }}"
   tags:
-    - ots
-    - ots-start
+    - ots-build
 
 - name: Check OpenTAKServer service status
   ansible.builtin.shell:
@@ -261,13 +261,12 @@
   register: ots_status
   changed_when: false
   tags:
-    - ots
-    - ots-start
+    - ots-build
 
 - name: Display service status
   ansible.builtin.debug:
     msg: "{{ ots_status.stdout_lines }}"
   tags:
-    - ots
-    - ots-start
+    - ots-build
+
 
