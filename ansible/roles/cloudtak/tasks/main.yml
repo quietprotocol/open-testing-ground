@@ -7,14 +7,14 @@
     state: directory
     mode: '0755'
   tags:
-    - cloudtak
+    - cloudtak-clone
 
 - name: Check if CloudTAK repository exists
   ansible.builtin.stat:
     path: "{{ cloudtak_dir }}/.git"
   register: cloudtak_repo_exists
   tags:
-    - cloudtak
+    - cloudtak-clone
 
 - name: Clone CloudTAK repository
   ansible.builtin.git:
@@ -25,7 +25,7 @@
     version: "{{ cloudtak_version | default('main') }}"
   when: not cloudtak_repo_exists.stat.exists
   tags:
-    - cloudtak
+    - cloudtak-clone
 
 - name: Update CloudTAK repository
   ansible.builtin.git:
@@ -36,7 +36,7 @@
     version: "{{ cloudtak_version | default('main') }}"
   when: cloudtak_repo_exists.stat.exists
   tags:
-    - cloudtak
+    - cloudtak-clone
 
 - name: Get timestamp for backup
   ansible.builtin.shell:
@@ -45,7 +45,7 @@
   changed_when: false
   when: compose_backup | default(true)
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Backup existing docker-compose.yml if it exists
   ansible.builtin.copy:
@@ -58,7 +58,7 @@
   ignore_errors: true
   changed_when: false
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Copy docker-compose.yml to device
   ansible.builtin.copy:
@@ -66,7 +66,7 @@
     dest: "{{ cloudtak_dir }}/docker-compose.yml"
     mode: '0644'
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Ensure media directory exists
   ansible.builtin.file:
@@ -74,7 +74,7 @@
     state: directory
     mode: '0755'
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Copy mediamtx.yml configuration
   ansible.builtin.copy:
@@ -82,7 +82,7 @@
     dest: "{{ cloudtak_dir }}/media/mediamtx.yml"
     mode: '0644'
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Ensure tasks/pmtiles directory exists
   ansible.builtin.file:
@@ -90,7 +90,7 @@
     state: directory
     mode: '0755'
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Copy pmtiles Dockerfile.compose
   ansible.builtin.copy:
@@ -98,14 +98,14 @@
     dest: "{{ cloudtak_dir }}/tasks/pmtiles/Dockerfile.compose"
     mode: '0644'
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Check if .env file exists
   ansible.builtin.stat:
     path: "{{ cloudtak_dir }}/.env"
   register: env_file_exists
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Create .env file from role .env.example if it doesn't exist
   ansible.builtin.copy:
@@ -114,7 +114,7 @@
     mode: '0644'
   when: not env_file_exists.stat.exists
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Verify deployment
   ansible.builtin.shell:
@@ -126,13 +126,13 @@
   register: cloudtak_verify
   changed_when: false
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Display deployment verification
   ansible.builtin.debug:
     msg: "{{ cloudtak_verify.stdout_lines }}"
   tags:
-    - cloudtak
+    - cloudtak-push
 
 - name: Build CloudTAK services
   ansible.builtin.shell:
@@ -154,14 +154,12 @@
     chdir: "{{ cloudtak_dir }}"
   register: cloudtak_start
   tags:
-    - cloudtak
     - cloudtak-start
 
 - name: Display start output
   ansible.builtin.debug:
     msg: "{{ cloudtak_start.stdout_lines }}"
   tags:
-    - cloudtak
     - cloudtak-start
 
 - name: Check CloudTAK service status
@@ -171,13 +169,11 @@
   register: cloudtak_status
   changed_when: false
   tags:
-    - cloudtak
     - cloudtak-start
 
 - name: Display service status
   ansible.builtin.debug:
     msg: "{{ cloudtak_status.stdout_lines }}"
   tags:
-    - cloudtak
     - cloudtak-start
 

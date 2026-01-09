@@ -103,15 +103,11 @@
   hosts: gateway
   gather_facts: false
   become: false
-  tags:
-    - cloudtak
   
   tasks:
-    - name: Include cloudtak role
-      include_role:
+    - name: Import cloudtak role
+      import_role:
         name: cloudtak
-      tags:
-        - cloudtak
 
 - name: Deploy OpenWrt Docker Diffconfig to Build Server
   hosts: localhost
