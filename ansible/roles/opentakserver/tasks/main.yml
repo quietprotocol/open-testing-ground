@@ -230,6 +230,27 @@
     - ots-push
     - ots-nginx
 
+# ****************************************
+# Custom UI build (instead of milsimdk pre-built image)
+# ****************************************
+- name: Copy Dockerfile.webui for local UI build
+  ansible.builtin.copy:
+    src: Dockerfile.webui
+    dest: "{{ opentakserver_dir }}/Dockerfile.webui"
+    mode: '0644'
+  tags:
+    - ots-push
+    - ots-webui
+
+- name: Copy webui nginx config template
+  ansible.builtin.copy:
+    src: webui.conf.template
+    dest: "{{ opentakserver_dir }}/webui.conf.template"
+    mode: '0644'
+  tags:
+    - ots-push
+    - ots-webui
+
 - name: Verify deployment
   ansible.builtin.shell:
     cmd: |
@@ -248,9 +269,9 @@
   tags:
     - ots-push
 
-- name: Start OpenTAKServer services
+- name: Build and start OpenTAKServer services
   ansible.builtin.shell:
-    cmd: docker compose up -d
+    cmd: docker compose up -d --build
     chdir: "{{ opentakserver_dir }}"
   register: ots_start
   tags:
