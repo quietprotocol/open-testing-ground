@@ -3,16 +3,26 @@
 # OpenTAKServer UI - Built from official brian7704 releases
 # ************************************************************
 
-# First stage: download latest release
+# First stage: download release
 FROM python:3.13-slim AS build
+
+# UI version to download (default: latest)
+# Examples: "latest", "v1.7.2", "1.7.2", "v1.7.1"
+ARG OTS_UI_VERSION=latest
 
 WORKDIR /build
 
-# Install lastversion to fetch latest GitHub release
+# Install lastversion to fetch GitHub releases
 RUN pip3 install --no-cache-dir lastversion
 
-# Download and extract latest OpenTAKServer-UI release
-RUN lastversion --assets extract brian7704/OpenTAKServer-UI
+# Download and extract OpenTAKServer-UI release
+# If OTS_UI_VERSION is "latest", get the latest release
+# Otherwise, get the specific version
+RUN if [ "$OTS_UI_VERSION" = "latest" ]; then \
+        lastversion --assets extract brian7704/OpenTAKServer-UI; \
+    else \
+        lastversion --assets extract brian7704/OpenTAKServer-UI --at "$OTS_UI_VERSION"; \
+    fi
 
 # ************************************************************
 # Second stage: nginx runtime

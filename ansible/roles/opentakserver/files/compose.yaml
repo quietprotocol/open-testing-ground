@@ -105,7 +105,9 @@ services:
       context: .
       dockerfile: Dockerfile.webui
       network: host
-    image: ots-webui:latest
+      args:
+        OTS_UI_VERSION: "${OTS_UI_VERSION:-latest}"
+    image: ots-webui:${OTS_UI_VERSION:-latest}
     container_name: ots-webui
     hostname: opentakserver-webui
     restart: unless-stopped

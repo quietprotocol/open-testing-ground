@@ -230,9 +230,6 @@
     - ots-push
     - ots-nginx
 
-# ****************************************
-# Custom UI build (instead of milsimdk pre-built image)
-# ****************************************
 - name: Copy Dockerfile.webui for local UI build
   ansible.builtin.copy:
     src: Dockerfile.webui
@@ -271,7 +268,7 @@
 
 - name: Build and start OpenTAKServer services
   ansible.builtin.shell:
-    cmd: docker compose up -d --build
+    cmd: OTS_UI_VERSION={{ ots_ui_version }} docker compose up -d --build
     chdir: "{{ opentakserver_dir }}"
   register: ots_start
   tags:
