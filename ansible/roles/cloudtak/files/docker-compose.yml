@@ -114,6 +114,7 @@ networks:
         name: cloudtak_default
         driver: bridge
         driver_opts:
+            com.docker.network.bridge.name: "br-cloudtak"
             com.docker.network.bridge.enable_ip_masquerade: "true"
         ipam:
             config:

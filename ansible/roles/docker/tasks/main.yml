@@ -219,3 +219,59 @@
   tags:
     - docker
 
+# ========================================
+# OpenWrt Firewall Configuration for Docker
+# ========================================
+# Docker containers need firewall rules to access the internet.
+# The cloudtak network uses a fixed bridge name 'br-cloudtak'.
+#
+# SURGICAL APPROACH: Instead of creating a separate docker zone,
+# we simply add the br-cloudtak bridge to the existing 'lan' zone.
+# The lan zone already has masquerade and ACCEPT rules, so docker
+# containers get internet access automatically.
+
+- name: Add Docker bridge to LAN firewall zone
+  ansible.builtin.shell: |
+    # Check if br-cloudtak is already in the lan zone
+    existing=$(uci show firewall 2>/dev/null | grep "@zone\[0\].*device.*br-cloudtak" || true)
+    if [ -z "$existing" ]; then
+      # Add br-cloudtak to the lan zone (zone[0] is always lan in OpenWrt)
+      uci add_list firewall.@zone[0].device='br-cloudtak'
+      uci commit firewall
+      echo "added"
+    else
+      echo "exists"
+    fi
+  register: docker_firewall
+  changed_when: docker_firewall.stdout == "added"
+  tags:
+    - docker
+    - docker-firewall
+
+- name: Reload firewall to apply Docker rules
+  ansible.builtin.shell: |
+    /etc/init.d/firewall reload
+  when: docker_firewall.changed
+  tags:
+    - docker
+    - docker-firewall
+
+- name: Verify Docker firewall configuration
+  ansible.builtin.shell: |
+    echo "=== LAN Zone (includes Docker bridge) ==="
+    uci show firewall.@zone[0] 2>/dev/null
+    echo ""
+    echo "=== nftables forward chain ==="
+    nft list chain inet fw4 forward 2>/dev/null | grep -E 'lan|cloudtak' | head -5
+  register: docker_firewall_status
+  changed_when: false
+  tags:
+    - docker
+    - docker-firewall
+
+- name: Display Docker firewall configuration
+  ansible.builtin.debug:
+    msg: "{{ docker_firewall_status.stdout_lines }}"
+  tags:
+    - docker
+    - docker-firewall
