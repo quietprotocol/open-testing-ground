@@ -1,0 +1,152 @@
+---
+# OpenTAKServer Maps Upload Role
+# Uploads ATAK map source definitions from getgotak.com to OpenTAKServer
+# Uses token authentication: https://docs.opentakserver.io/authentication.html
+
+- name: Ensure temporary directory exists
+  ansible.builtin.file:
+    path: "{{ maps_temp_dir }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Check if curl is available
+  ansible.builtin.command:
+    cmd: which curl
+  register: curl_check
+  changed_when: false
+  failed_when: false
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Fail if curl is not available
+  ansible.builtin.fail:
+    msg: "curl is required but not installed on the control machine"
+  when: curl_check.rc != 0
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Get authentication token from OpenTAKServer
+  ansible.builtin.uri:
+    url: "http://{{ opentakserver_host }}:{{ opentakserver_port }}/api/login?include_auth_token="
+    method: POST
+    body_format: json
+    body:
+      username: "{{ opentakserver_username }}"
+      password: "{{ opentakserver_password }}"
+    status_code: [200]
+    return_content: yes
+  register: auth_response
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Extract authentication token from response
+  ansible.builtin.set_fact:
+    auth_token: "{{ auth_response.json.response.user.authentication_token }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Display authentication success
+  ansible.builtin.debug:
+    msg: "Successfully authenticated with OpenTAKServer"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Download ATAK Maps ZIP from getgotak.com
+  ansible.builtin.get_url:
+    url: "{{ maps_download_url }}"
+    dest: "{{ maps_temp_dir }}/{{ maps_filename }}"
+    mode: '0644'
+    timeout: 120
+  register: maps_download
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Verify downloaded file exists
+  ansible.builtin.stat:
+    path: "{{ maps_temp_dir }}/{{ maps_filename }}"
+  register: maps_file_stat
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Display download info
+  ansible.builtin.debug:
+    msg: "Downloaded {{ maps_filename }} ({{ maps_file_stat.stat.size | human_readable }})"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Upload Maps ZIP to OpenTAKServer
+  ansible.builtin.shell:
+    cmd: |
+      curl -s -w "\n%{http_code}" -X POST \
+        -H "Authentication-Token: {{ auth_token }}" \
+        -F "file=@{{ maps_temp_dir }}/{{ maps_filename }}" \
+        "http://{{ opentakserver_host }}:{{ opentakserver_port }}{{ opentakserver_upload_endpoint }}"
+  register: maps_upload
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Parse upload response
+  ansible.builtin.set_fact:
+    upload_http_code: "{{ maps_upload.stdout_lines[-1] }}"
+    upload_body: "{{ maps_upload.stdout_lines[0:-1] | join('\n') }}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Display upload result
+  ansible.builtin.debug:
+    msg: "Uploaded {{ maps_filename }} - HTTP Status: {{ upload_http_code }}{% if upload_http_code == '200' %} ✓{% endif %}"
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Clean up temporary file
+  ansible.builtin.file:
+    path: "{{ maps_temp_dir }}/{{ maps_filename }}"
+    state: absent
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Display summary
+  ansible.builtin.debug:
+    msg: "ATAK Maps upload complete. File uploaded to OpenTAKServer data packages."
+  when: upload_http_code == '200'
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps
+
+- name: Fail if upload failed
+  ansible.builtin.fail:
+    msg: "Maps file failed to upload. HTTP Status: {{ upload_http_code }}. Response: {{ upload_body }}"
+  when: upload_http_code != '200'
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - ots-maps

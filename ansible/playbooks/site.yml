@@ -152,6 +152,20 @@
       tags:
         - ots-packages
 
+- name: Upload ATAK maps to OpenTAKServer
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - ots-maps
+  
+  tasks:
+    - name: Include opentakserver-maps role
+      include_role:
+        name: opentakserver-maps
+      tags:
+        - ots-maps
+
 - name: Create users in OpenTAKServer
   hosts: openmanet_devices
   gather_facts: false
