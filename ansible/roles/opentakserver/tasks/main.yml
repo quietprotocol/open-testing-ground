@@ -152,7 +152,6 @@
     patterns:
       - "{{ ots_cert_fullchain }}"
       - "{{ ots_cert_key }}"
-      - "{{ ots_cert_ca }}"
     recurse: false
   register: local_cert_files
   delegate_to: localhost
@@ -163,7 +162,7 @@
 - name: Copy certificate files to remote host
   ansible.builtin.copy:
     src: "{{ item.path }}"
-    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key') | regex_replace('^ca\\.cer$', 'ca.pem')) }}"
+    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key')) }}"
     mode: '{{ "0600" if ".key" in item.path else "0644" }}'
     remote_src: false
   loop: "{{ local_cert_files.files | default([]) }}"
