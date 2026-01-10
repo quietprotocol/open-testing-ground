@@ -221,6 +221,15 @@
     - ots-push
     - ots-nginx
 
+- name: Copy nginx TAK SSL stream template (for CloudTAK integration)
+  ansible.builtin.copy:
+    src: tak-ssl-8089.conf.stream-template
+    dest: "{{ opentakserver_dir }}/persistent/nginx/templates/tak-ssl-8089.conf.stream-template"
+    mode: '0644'
+  tags:
+    - ots-push
+    - ots-nginx
+
 - name: Verify deployment
   ansible.builtin.shell:
     cmd: |

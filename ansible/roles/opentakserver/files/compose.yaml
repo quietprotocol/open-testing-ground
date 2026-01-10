@@ -99,6 +99,7 @@ services:
     depends_on:
       ots:
         condition: service_healthy
+
   ots-webui:
     image: ghcr.io/milsimdk/ots-ui-docker-image:latest
     container_name: ots-webui

@@ -1,0 +1,14 @@
+#******************************************************
+#   TAK SSL Passthrough
+#   Port: 8089
+#   Forwards to ots-eud_handler-ssl for TAK streaming
+#   This allows CloudTAK to reach OTS via the nginx-proxy
+#   network alias (ots.marmal.duckdns.org)
+#******************************************************
+server {
+    listen     8089;
+
+    # TCP passthrough - no SSL termination (OTS handles SSL)
+    proxy_pass ots-eud_handler-ssl:8089;
+    proxy_connect_timeout 10s;
+}
