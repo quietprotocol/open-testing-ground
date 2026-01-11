@@ -113,8 +113,8 @@
 
 - name: Copy nginx certificate include file to templates
   ansible.builtin.copy:
-    src: includes.d/opentakserver_certificate
-    dest: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d/opentakserver_certificate"
+    src: includes.d/letsencrypt_certificate
+    dest: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d/letsencrypt_certificate"
     mode: '0644'
   tags:
     - ots-push
@@ -122,8 +122,8 @@
 
 - name: Copy nginx certificate include file to includes (runtime)
   ansible.builtin.copy:
-    src: includes.d/opentakserver_certificate
-    dest: "{{ opentakserver_dir }}/persistent/nginx/includes/opentakserver_certificate"
+    src: includes.d/letsencrypt_certificate
+    dest: "{{ opentakserver_dir }}/persistent/nginx/includes/letsencrypt_certificate"
     mode: '0644'
   tags:
     - ots-push
@@ -150,8 +150,9 @@
   ansible.builtin.find:
     paths: "{{ expanded_cert_path }}"
     patterns:
-      - "{{ ots_cert_fullchain }}"
-      - "{{ ots_cert_key }}"
+      - "{{ ots_letsencrypt_cert_fullchain }}"
+      - "{{ ots_letsencrypt_cert_key }}"
+      - "{{ ots_letsencrypt_cert_ca }}"
     recurse: false
   register: local_cert_files
   delegate_to: localhost
@@ -162,7 +163,7 @@
 - name: Copy certificate files to remote host
   ansible.builtin.copy:
     src: "{{ item.path }}"
-    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key')) }}"
+    dest: "{{ opentakserver_dir }}/{{ ots_cert_remote_path }}/letsencrypt_{{ (item.path | basename | regex_replace('.*\\.key$', 'privkey.key')) }}"
     mode: '{{ "0600" if ".key" in item.path else "0644" }}'
     remote_src: false
   loop: "{{ local_cert_files.files | default([]) }}"

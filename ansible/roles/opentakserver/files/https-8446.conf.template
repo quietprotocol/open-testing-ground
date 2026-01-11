@@ -9,7 +9,7 @@ server {
     client_max_body_size ${CLIENT_MAX_BODY_SIZE};
 
     # OpenTakServer certificates
-    include includes.d/opentakserver_certificate;
+    include includes.d/letsencrypt_certificate;
 
     #******************************************************
     #       Certificate Enrollment

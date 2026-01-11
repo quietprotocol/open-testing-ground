@@ -3,11 +3,11 @@
 # Certificate files are copied from local machine and placed in this directory
 
 # CA certificate for client certificate verification (if ca.pem exists, otherwise use ca.cer)
-ssl_client_certificate /app/ots/ca/ca.pem;
+ssl_client_certificate /app/ots/ca/letsencrypt_ca.pem;
 
 # Server SSL certificate (Let's Encrypt wildcard certificate)
-ssl_certificate /app/ots/ca/fullchain.cer;
-ssl_certificate_key /app/ots/ca/privkey.key;
+ssl_certificate /app/ots/ca/letsencrypt_fullchain.cer;
+ssl_certificate_key /app/ots/ca/letsencrypt_privkey.key;
 
 # SSL Protocol Configuration
 ssl_protocols TLSv1.2 TLSv1.3;

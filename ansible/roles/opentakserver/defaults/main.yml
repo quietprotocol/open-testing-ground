@@ -13,9 +13,9 @@ ots_ui_version: "v1.7.2"
 ots_cert_local_path: ~/.acme.sh/*.marmal.duckdns.org_ecc
 
 # Certificate file names (relative to ots_cert_local_path)
-ots_cert_fullchain: fullchain.cer
-ots_cert_key: "*.marmal.duckdns.org.key"
-ots_cert_ca: ca.cer
+ots_letsencrypt_cert_fullchain: fullchain.cer
+ots_letsencrypt_cert_key: "*.marmal.duckdns.org.key"
+ots_letsencrypt_cert_ca: ca.cer
 
 # Remote path where certificates will be stored on the target host
 # This path is relative to opentakserver_dir
