@@ -32,3 +32,4 @@ artifacts/
 *.img.gz
 *.log
 
+*.code-workspace
