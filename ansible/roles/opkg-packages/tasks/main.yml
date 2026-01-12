@@ -1,0 +1,19 @@
+---
+# OPKG package management role
+
+- name: Update OPKG package lists
+  ansible.builtin.shell: |
+    opkg update
+  when: opkg_update | bool
+  tags:
+    - opkg
+    - opkg-update
+
+- name: Install OPKG packages
+  ansible.builtin.shell: |
+    opkg install {{ (opkg_packages + opkg_packages_extra) | join(' ') }} || true
+  args:
+    creates: /usr/bin/git
+  tags:
+    - opkg
+    - opkg-install

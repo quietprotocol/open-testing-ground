@@ -1,0 +1,21 @@
+---
+# Default variables for opkg-packages role
+
+# List of packages to install via opkg
+# This can be overridden per role or playbook
+opkg_packages:
+  - git-http
+  - git
+  - openssh-client
+  - bash
+  - unzip
+  - coreutils-sha1sum
+  - htop
+  - ca-bundle
+  - collectd-mod-thermal
+
+# Additional packages that can be added by roles
+opkg_packages_extra: []
+
+# Whether to run opkg update before installing packages
+opkg_update: true

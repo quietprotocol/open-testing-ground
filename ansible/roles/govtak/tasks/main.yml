@@ -2,11 +2,8 @@
 # GovTAK Server deployment role
 
 - name: Install required packages for GovTAK Server
-  ansible.builtin.shell: |
-    opkg update
-    opkg install git-http git openssh-client bash unzip coreutils-sha1sum htop || true
-  args:
-    creates: /usr/bin/git
+  ansible.builtin.include_role:
+    name: opkg-packages
   tags:
     - govtak
     - govtak-setup

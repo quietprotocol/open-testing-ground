@@ -1,0 +1,11 @@
+---
+# Playbook for OPKG package installation only
+# Usage: ansible-playbook playbooks/opkg-packages.yml
+
+- name: Install OPKG Packages
+  hosts: openmanet_devices
+  gather_facts: yes
+  become: no
+  
+  roles:
+    - opkg-packages

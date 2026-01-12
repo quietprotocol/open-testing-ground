@@ -2,6 +2,20 @@
 # Main playbook for OpenMANET gateway deployment
 # Usage: ansible-playbook playbooks/site.yml
 
+- name: Install OPKG Packages on Gateway
+  hosts: openmanet_devices
+  gather_facts: false
+  become: false
+  tags:
+    - opkg
+  
+  tasks:
+    - name: Include opkg-packages role
+      include_role:
+        name: opkg-packages
+      tags:
+        - opkg
+
 - name: Deploy Docker on Gateway
   hosts: openmanet_devices
   gather_facts: false

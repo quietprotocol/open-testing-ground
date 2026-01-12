@@ -2,11 +2,8 @@
 # OpenTAKServer deployment role
 
 - name: Install required packages for OpenTAKServer
-  ansible.builtin.shell: |
-    opkg update
-    opkg install git-http git openssh-client bash unzip coreutils-sha1sum htop ca-bundle || true
-  args:
-    creates: /usr/bin/git
+  ansible.builtin.include_role:
+    name: opkg-packages
   tags:
     - ots-clone
 
