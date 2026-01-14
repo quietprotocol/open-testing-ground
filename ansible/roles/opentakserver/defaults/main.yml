@@ -21,3 +21,9 @@ ots_letsencrypt_cert_ca: ca.cer
 # This path is relative to opentakserver_dir
 ots_cert_remote_path: persistent/ots/ca
 
+# DNS configuration for local resolution of *.marmal.duckdns.org
+# Gateway IP on mesh network (10.41.0.0/16)
+dnsmasq_mesh_gateway_ip: "10.41.0.1"
+# Domain to map locally
+dnsmasq_local_domain: "marmal.duckdns.org"
+
