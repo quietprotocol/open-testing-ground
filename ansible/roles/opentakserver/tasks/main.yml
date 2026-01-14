@@ -293,4 +293,75 @@
   tags:
     - ots-build
 
+# ========================================
+# DNS Configuration for Local Resolution
+# ========================================
+# Configure dnsmasq to resolve *.marmal.duckdns.org locally
+# This allows devices on the mesh network to resolve OTS and CloudTAK
+# hostnames to the gateway IP when offline or when using local DNS
+
+- name: Check if wildcard DNS address mapping exists
+  ansible.builtin.shell: |
+    uci show dhcp.@dnsmasq[0] | grep -q "address='/{{ dnsmasq_local_domain }}/{{ dnsmasq_mesh_gateway_ip }}'" && echo "exists" || echo "missing"
+  register: dns_address_check
+  changed_when: false
+  tags:
+    - ots-push
+    - ots-dns
+
+- name: Add wildcard DNS address mapping for local domain resolution
+  ansible.builtin.shell: |
+    uci add_list dhcp.@dnsmasq[0].address='/{{ dnsmasq_local_domain }}/{{ dnsmasq_mesh_gateway_ip }}'
+    uci commit dhcp
+  when: dns_address_check.stdout == "missing"
+  tags:
+    - ots-push
+    - ots-dns
+
+- name: Check if rebind domain whitelist exists
+  ansible.builtin.shell: |
+    uci show dhcp.@dnsmasq[0] | grep -q "rebind_domain='{{ dnsmasq_local_domain }}'" && echo "exists" || echo "missing"
+  register: dns_rebind_check
+  changed_when: false
+  tags:
+    - ots-push
+    - ots-dns
+
+- name: Add rebind domain whitelist to allow private IP resolution
+  ansible.builtin.shell: |
+    uci add_list dhcp.@dnsmasq[0].rebind_domain='{{ dnsmasq_local_domain }}'
+    uci commit dhcp
+  when: dns_rebind_check.stdout == "missing"
+  tags:
+    - ots-push
+    - ots-dns
+
+- name: Reload dnsmasq to apply DNS configuration
+  ansible.builtin.shell: |
+    /etc/init.d/dnsmasq reload
+  when: dns_address_check.stdout == "missing" or dns_rebind_check.stdout == "missing"
+  tags:
+    - ots-push
+    - ots-dns
+
+- name: Verify DNS configuration
+  ansible.builtin.shell: |
+    echo "DNS Address Mappings:"
+    uci show dhcp.@dnsmasq[0] | grep address || echo "None"
+    echo ""
+    echo "Rebind Domain Whitelist:"
+    uci show dhcp.@dnsmasq[0] | grep rebind_domain || echo "None"
+  register: dns_verify
+  changed_when: false
+  tags:
+    - ots-push
+    - ots-dns
+
+- name: Display DNS configuration
+  ansible.builtin.debug:
+    msg: "{{ dns_verify.stdout_lines }}"
+  tags:
+    - ots-push
+    - ots-dns
+
 
