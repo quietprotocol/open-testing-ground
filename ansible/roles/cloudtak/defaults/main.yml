@@ -5,7 +5,7 @@
 cloudtak_dir: ~/cloudtak
 
 # Git version/branch to checkout (default: main)
-cloudtak_version: main
+cloudtak_version: v12.56.0
 
 # Whether to backup existing compose files before overwriting
 compose_backup: true
