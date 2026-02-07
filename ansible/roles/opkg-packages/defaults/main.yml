@@ -4,6 +4,7 @@
 # List of packages to install via opkg
 # This can be overridden per role or playbook
 opkg_packages:
+  - python3
   - git-http
   - git
   - openssh-client
