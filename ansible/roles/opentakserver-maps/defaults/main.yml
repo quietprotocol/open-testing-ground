@@ -11,7 +11,7 @@ opentakserver_password: password
 
 # Map source file from getgotak.com
 # This ZIP contains XML definitions for various map tile sources (Google, Bing, ESRI, etc.)
-maps_download_url: "https://getgotak.com/maps/ATAK-Maps.zip"
+maps_download_url: "https://github.com/joshuafuller/ATAK-Maps/releases/download/v1.5.0/atak-maps-1.5.0.zip"
 maps_filename: "ATAK-Maps.zip"
 
 # Local temporary directory for downloads
