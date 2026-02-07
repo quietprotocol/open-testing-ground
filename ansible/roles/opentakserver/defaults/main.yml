@@ -6,7 +6,7 @@ compose_backup: true
 
 # OTS UI version to build
 # Options: "latest", "v1.7.2", "v1.7.1", etc.
-ots_ui_version: "v1.7.2"
+ots_ui_version: "v1.7.3"
 
 # SSL Certificate configuration
 # Local path to certificates on Ansible control machine
