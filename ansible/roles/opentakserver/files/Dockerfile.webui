@@ -21,7 +21,7 @@ RUN pip3 install --no-cache-dir lastversion
 RUN if [ "$OTS_UI_VERSION" = "latest" ]; then \
         lastversion --assets extract brian7704/OpenTAKServer-UI; \
     else \
-        lastversion --assets extract brian7704/OpenTAKServer-UI --at "$OTS_UI_VERSION"; \
+        lastversion --assets extract "brian7704/OpenTAKServer-UI:${OTS_UI_VERSION#v}"; \
     fi
 
 # ************************************************************
