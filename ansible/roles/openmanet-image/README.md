@@ -7,7 +7,7 @@ Complete OpenWrt firmware build workflow. This role handles the entire build pro
 ## Complete Workflow
 
 1. **Clone Repository**: Clones [OpenMANET/firmware](https://github.com/OpenMANET/firmware) repository on remote build server
-2. **Checkout Branch**: Checks out specified branch (default: `24.10` for 1.6.0-RC2)
+2. **Checkout Branch**: Checks out specified branch
 3. **Initialize Build**: Runs `openmanet_setup.sh` to initialize build environment
 4. **Apply Docker Config**: Applies `docker_diffconfig` to enable Docker support
 5. **Download Sources**: Downloads all required source packages
@@ -43,7 +43,7 @@ Variables are defined in `defaults/main.yml`:
 ### Repository Configuration
 
 - `openwrt_repo_url`: Repository URL (default: `https://github.com/OpenMANET/firmware.git`)
-- `openwrt_repo_branch`: Branch to checkout (default: `24.10` for 1.6.0-RC2)
+- `openwrt_repo_branch`: Branch to checkout
 - `openwrt_build_config`: Board identifier (default: `ekh-bcm2711` for RPi4, or `ekh01` which is still supported)
 
 ### Build Configuration
@@ -67,7 +67,7 @@ build_server_user: ubuntu
 build_ssh_key: ~/.ssh/id_rsa_proxmox_vms
 
 # OpenWrt build configuration
-openwrt_repo_branch: 24.10  # or 1.6.0-RC2 tag
+openwrt_repo_branch: 1.6.1 
 openwrt_build_config: ekh-bcm2711  # or ekh01 (still supported)
 openwrt_build_jobs: 16  # Adjust based on CPU cores
 ```
@@ -139,16 +139,16 @@ ansible-playbook playbooks/site.yml --tags openwrt-flash --limit gateway \
 - Settings are preserved by default (`openwrt_flash_keep_settings: true`)
 - Use `sysupgrade` compatible images (`.img.gz` files with `-sysupgrade` in the name)
 
-## Manual build 1.6.0
+## Manual build 1.6.1
 
 ```bash
 git clone https://github.com/OpenMANET/firmware.git
 cd firmware
-git checkout 24.10
+git checkout 1.6.1
 ./scripts/openmanet_setup.sh -i -b ekh-bcm2711
 make menuconfig (this is where we select the docker under utils.)
 make download
-rm /home/ubuntu/source/openwrt/bin/targets/bcm27xx/bcm2711/openwrt-morse-2.8.5-morsemicro-mm6108-ekh01-squashfs-sysupgrade.img.gz 
+rm /home/ubuntu/source/firmware/bin/targets/bcm27xx/bcm2711/openmanet-1.6.1-rpi4-mm6108-spi-squashfs-sysupgrade.img.gz
 rm log.txt
 make -j16 V=sc 2>&1 | tee log.txt
 ```

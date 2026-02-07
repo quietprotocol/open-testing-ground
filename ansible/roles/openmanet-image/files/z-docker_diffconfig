@@ -58,3 +58,9 @@ CONFIG_PACKAGE_luci-lib-docker=y
 
 # LuCI → 3. Applications: luci-app-dockerman
 CONFIG_PACKAGE_luci-app-dockerman=y
+
+#
+# Resolve package file clash: usbutils and busybox both provide /usr/bin/lsusb.
+# Prefer busybox's lsusb to avoid "opkg_install_cmd: Cannot install package usbutils".
+#
+# CONFIG_PACKAGE_usbutils is not set

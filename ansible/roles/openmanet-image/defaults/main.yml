@@ -13,7 +13,7 @@ openwrt_build_path: "{{ build_server_path | default('/home/ubuntu/source/firmwar
 
 # Repository configuration
 openwrt_repo_url: "https://github.com/OpenMANET/firmware.git"
-openwrt_repo_branch: "24.10"  # Can be overridden: 24.10, 1.6.0-RC2, release-1.5, etc.
+openwrt_repo_branch: "1.6.1"  # Can be overridden
 openwrt_repo_dir: "{{ openwrt_build_path }}"
 
 # Build configuration
