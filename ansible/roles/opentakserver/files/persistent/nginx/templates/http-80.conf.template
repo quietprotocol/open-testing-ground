@@ -48,6 +48,7 @@ server {
         proxy_redirect off;
 
         client_max_body_size 0;
+        add_header Access-Control-Allow-Origin * always;
     }
 
     #******************************************************

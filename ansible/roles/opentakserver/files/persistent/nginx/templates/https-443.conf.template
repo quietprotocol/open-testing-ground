@@ -45,14 +45,19 @@ server {
 
     # Proxy HLS requests to MediaMTX
     location ~ ^/hls(/?)(.*)$ {
-        include includes.d/proxy_params;
         proxy_pass http://${MTX_ADDRESS}:8888/$2$is_args$args;
         proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_redirect off;
+        proxy_redirect http://${MTX_ADDRESS}:8888/ $scheme://$http_host/hls/;
+        proxy_redirect ~^https?://[^/]+/(.*)$ $scheme://$http_host/hls/$1;
 
         client_max_body_size 0;
+        add_header Access-Control-Allow-Origin * always;
     }
     #******************************************************
     #       OpenTakServer API
