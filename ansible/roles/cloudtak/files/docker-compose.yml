@@ -71,6 +71,7 @@ services:
             - AWS_S3_SecretAccessKey=${AWS_S3_SecretAccessKey}
 
     media:
+        profiles: ["mediamtx"]
         image: bluenviron/mediamtx:latest
         restart: 'always'
         volumes:
