@@ -83,7 +83,7 @@ services:
       - 0.0.0.0:8880:80 # HTTP Web UI
       - 0.0.0.0:8440:443 # HTTPS Web UI
 
-      - 0.0.0.0:8881:8080 # HTTP API requests to OpenTAKServer port 8081
+      - 0.0.0.0:8080:8080 # HTTP API requests to OpenTAKServer port 8081
       - 0.0.0.0:8443:8443 # HTTPS API requests to OpenTAKServer port 8081
       - 0.0.0.0:8446:8446 # Proxy for certificate enrollment to OpenTAKServer port 8081
 
