@@ -81,18 +81,25 @@
   tags:
     - ots-push
 
-- name: Ensure nginx templates directory exists
+- name: Ensure MediaMTX config directory exists
   ansible.builtin.file:
-    path: "{{ opentakserver_dir }}/persistent/nginx/templates"
+    path: "{{ opentakserver_dir }}/persistent/ots/mediamtx"
     state: directory
     mode: '0755'
   tags:
     - ots-push
-    - ots-certs
 
-- name: Ensure nginx templates includes.d directory exists
+- name: Copy MediaMTX template
+  ansible.builtin.copy:
+    src: persistent/ots/mediamtx/mediamtx.template
+    dest: "{{ opentakserver_dir }}/persistent/ots/mediamtx/mediamtx.template"
+    mode: '0644'
+  tags:
+    - ots-push
+
+- name: Ensure nginx templates directory exists
   ansible.builtin.file:
-    path: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d"
+    path: "{{ opentakserver_dir }}/persistent/nginx/templates"
     state: directory
     mode: '0755'
   tags:
@@ -108,18 +115,9 @@
     - ots-push
     - ots-certs
 
-- name: Copy nginx certificate include file to templates
+- name: Copy nginx certificate include file to includes
   ansible.builtin.copy:
-    src: includes.d/letsencrypt_certificate
-    dest: "{{ opentakserver_dir }}/persistent/nginx/templates/includes.d/letsencrypt_certificate"
-    mode: '0644'
-  tags:
-    - ots-push
-    - ots-certs
-
-- name: Copy nginx certificate include file to includes (runtime)
-  ansible.builtin.copy:
-    src: includes.d/letsencrypt_certificate
+    src: persistent/nginx/includes/letsencrypt_certificate
     dest: "{{ opentakserver_dir }}/persistent/nginx/includes/letsencrypt_certificate"
     mode: '0644'
   tags:
@@ -185,7 +183,7 @@
 
 - name: Copy fixed nginx http-80.conf.template
   ansible.builtin.copy:
-    src: http-80.conf.template
+    src: persistent/nginx/templates/http-80.conf.template
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/http-80.conf.template"
     mode: '0644'
   tags:
@@ -194,7 +192,7 @@
 
 - name: Copy fixed nginx https-443.conf.template
   ansible.builtin.copy:
-    src: https-443.conf.template
+    src: persistent/nginx/templates/https-443.conf.template
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/https-443.conf.template"
     mode: '0644'
   tags:
@@ -203,7 +201,7 @@
 
 - name: Copy fixed nginx https-8443.conf.template
   ansible.builtin.copy:
-    src: https-8443.conf.template
+    src: persistent/nginx/templates/https-8443.conf.template
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/https-8443.conf.template"
     mode: '0644'
   tags:
@@ -212,7 +210,7 @@
 
 - name: Copy fixed nginx https-8446.conf.template
   ansible.builtin.copy:
-    src: https-8446.conf.template
+    src: persistent/nginx/templates/https-8446.conf.template
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/https-8446.conf.template"
     mode: '0644'
   tags:
@@ -221,7 +219,7 @@
 
 - name: Copy nginx TAK SSL stream template (for CloudTAK integration)
   ansible.builtin.copy:
-    src: tak-ssl-8089.conf.stream-template
+    src: persistent/nginx/templates/tak-ssl-8089.conf.stream-template
     dest: "{{ opentakserver_dir }}/persistent/nginx/templates/tak-ssl-8089.conf.stream-template"
     mode: '0644'
   tags:

@@ -99,4 +99,3 @@ server {
         return 301 https://$host:8440$request_uri;
     }
 }
-

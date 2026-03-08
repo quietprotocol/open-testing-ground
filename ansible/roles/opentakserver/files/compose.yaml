@@ -167,12 +167,12 @@ services:
 # - Mediamtx - Video streaming
 # ****************************************
   mediamtx:
-    profiles: ["mediamtx"]
     image: bluenviron/mediamtx:1.13.0-ffmpeg
     container_name: mediamtx
     hostname: mediamtx
     restart: unless-stopped
-    network_mode: host
+    networks:
+      - cloudtak_default
     ports:
       - 0.0.0.0:1935:1935 # RTMP video streams
       - 0.0.0.0:1936:1936 # RTMPS video streams
